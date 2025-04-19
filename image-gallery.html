@@ -1,0 +1,100 @@
+<html>
+  <head>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/nanogallery2@3/dist/css/nanogallery2.min.css" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/nanogallery2@3/dist/jquery.nanogallery2.min.js"></script>
+
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', sans-serif;
+        background: #f5f5f7;
+      }
+      
+      .header {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: linear-gradient(to right, #000428, #004e92);
+        color: white;
+        margin-bottom: 2rem;
+      }
+      
+      .header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 600;
+      }
+      
+      .header p {
+        margin: 1rem 0 0;
+        opacity: 0.8;
+      }
+
+      #ngy2p {
+        padding: 0 2rem;
+      }
+
+      /* NanoGallery2 customizations */
+      .nGY2 .nGY2GThumb {
+        transition: transform 0.3s ease;
+      }
+      
+      .nGY2 .nGY2GThumb:hover {
+        transform: translateY(-5px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Image Gallery</h1>
+      <p>A collection of beautiful moments captured in Berlin</p>
+    </div>
+
+    <div ID="SlideGear" data-nanogallery2='{
+        "itemsBaseURL": "https://jnanadarshan.github.io/slx146/images/",
+        "thumbnailWidth": "320",
+        "thumbnailHeight": "180",
+        "thumbnailBorderVertical": 1,
+        "thumbnailBorderHorizontal": 1,
+        "colorScheme": {
+          "thumbnail": {
+            "background": "#ffff0f",
+            "titleBackground": "rgba(0,0,0,0.7)",
+            "titleShadow": "none"
+          }
+        },
+        "thumbnailLabel": {
+          "position": "overImageOnBottom",
+          "align": "left",
+          "displayDescription": true,
+          "titleFontSize": "1rem",
+          "descriptionFontSize": "0.85rem"
+        },
+        "thumbnailAlignment": "center",
+        "gallerySorting": "random",
+        "breadcrumbAutoHideTopLevel": false,
+        "breadcrumbOnlyCurrentLevel": false,
+        "galleryFilterTags": "description",
+        "galleryFilterTagsMode": "multiple",
+        "thumbnailLevelUp": true,
+        "thumbnailOpenImage": true,
+        "allowHTMLinData": true,
+        "thumbnailGutterWidth": 20,
+        "thumbnailGutterHeight": 20
+      }'>
+      <a href="1.png" data-ngthumb="1.png" data-ngdesc="#Chart,#Human">Berlin 1</a>
+      <a href="2.png" data-ngthumb="2.png" data-ngdesc="#Graph">Berlin 2</a>
+      <a href="3.png" data-ngthumb="3.png" data-ngdesc="#Text #Accenture">Berlin 3</a>
+      <a href="4.png" data-ngthumb="4.png" data-ngdesc="#Map">Berlin 4</a>
+      <a href="5.png" data-ngthumb="5.png" data-ngdesc="#Map">Berlin 4</a>
+
+    </div>
+    
+  </body>
+</html>
