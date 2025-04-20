@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Tagger</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+        }
+        
+        .drop-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 3rem;
+            text-align: center;
+            background-color: #f1f5f9;
+            margin-bottom: 2rem;
+            transition: all 0.3s;
+        }
+        
+        .drop-area.highlight {
+            background-color: #e2e8f0;
+            border-color: #64748b;
+        }
+        
+        .drop-area p {
+            margin-bottom: 1rem;
+            color: #64748b;
+        }
+        
+        .file-input-wrapper {
+            display: inline-block;
+        }
+        
+        .file-input-button {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: #4299e1;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .file-input-button:hover {
+            background-color: #3182ce;
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        .images-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .image-card {
+            width: calc(33.333% - 1rem);
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        
+        .image-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .image-container {
+            height: 200px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f1f5f9;
+        }
+        
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .image-info {
+            padding: 1rem;
+        }
+        
+        .image-name {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            word-break: break-all;
+        }
+        
+        .tag-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+        
+        .tag-input:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+        
+        .output-container {
+            margin-top: 2rem;
+        }
+        
+        .output-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        
+        .options-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+        
+        .suffix-input-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .suffix-input-container label {
+            margin-right: 0.5rem;
+            white-space: nowrap;
+        }
+        
+        .suffix-input {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            width: 100px;
+        }
+        
+        .suffix-input:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+        
+        .copy-button {
+            padding: 0.5rem 1rem;
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .copy-button:hover {
+            background-color: #3182ce;
+        }
+        
+        .code-output {
+            background-color: #2d3748;
+            color: #f7fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .image-card {
+                width: calc(50% - 0.75rem);
+            }
+            
+            .options-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .image-card {
+                width: 100%;
+            }
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #48bb78;
+            color: white;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .notification.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Tagger</h1>
+    
+    <div class="drop-area" id="drop-area">
+        <p>Drag and drop image files here</p>
+        <div class="file-input-wrapper">
+            <label for="file-input" class="file-input-button">Or select files</label>
+            <input type="file" id="file-input" accept="image/*" multiple>
+        </div>
+    </div>
+    
+    <div class="images-container" id="images-container"></div>
+    
+    <div class="output-container">
+        <div class="output-header">
+            <h2>Generated Code</h2>
+        </div>
+        
+        <div class="options-container">
+            <div class="suffix-input-container">
+                <label for="thumbnail-suffix">Thumbnail suffix:</label>
+                <input type="text" id="thumbnail-suffix" class="suffix-input" placeholder="e.g. 't'" value="">
+            </div>
+            <button class="copy-button" id="copy-button">Copy to Clipboard</button>
+        </div>
+        
+        <pre class="code-output" id="code-output"></pre>
+    </div>
+    
+    <div class="notification" id="notification">Copied to clipboard!</div>
+    
+    <script>
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const imagesContainer = document.getElementById('images-container');
+        const codeOutput = document.getElementById('code-output');
+        const copyButton = document.getElementById('copy-button');
+        const notification = document.getElementById('notification');
+        const thumbnailSuffix = document.getElementById('thumbnail-suffix');
+        
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        // Highlight drop area when dragging files over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        // Handle dropped files
+        dropArea.addEventListener('drop', handleDrop, false);
+        
+        // Handle selected files
+        fileInput.addEventListener('change', handleFiles, false);
+        
+        // Copy button functionality
+        copyButton.addEventListener('click', copyToClipboard, false);
+        
+        // Update output when suffix changes
+        thumbnailSuffix.addEventListener('input', updateCodeOutput, false);
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        function highlight() {
+            dropArea.classList.add('highlight');
+        }
+        
+        function unhighlight() {
+            dropArea.classList.remove('highlight');
+        }
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles({ target: { files } });
+        }
+        
+        function handleFiles(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(processFile);
+            updateCodeOutput();
+        }
+        
+        function processFile(file) {
+            // Only process images
+            if (!file.type.match('image.*')) {
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const imageCard = document.createElement('div');
+                imageCard.className = 'image-card';
+                
+                const imageContainer = document.createElement('div');
+                imageContainer.className = 'image-container';
+                
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.alt = file.name;
+                
+                const imageInfo = document.createElement('div');
+                imageInfo.className = 'image-info';
+                
+                const imageName = document.createElement('div');
+                imageName.className = 'image-name';
+                imageName.textContent = file.name;
+                
+                const tagInput = document.createElement('input');
+                tagInput.type = 'text';
+                tagInput.className = 'tag-input';
+                tagInput.placeholder = 'Enter tags separated by spaces';
+                tagInput.dataset.filename = file.name;
+                tagInput.addEventListener('input', updateCodeOutput);
+                
+                imageContainer.appendChild(img);
+                imageInfo.appendChild(imageName);
+                imageInfo.appendChild(tagInput);
+                
+                imageCard.appendChild(imageContainer);
+                imageCard.appendChild(imageInfo);
+                
+                imagesContainer.appendChild(imageCard);
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        function updateCodeOutput() {
+            const tagInputs = document.querySelectorAll('.tag-input');
+            const suffix = thumbnailSuffix.value.trim();
+            let code = '';
+            
+            tagInputs.forEach(input => {
+                const fileName = input.dataset.filename;
+                const tagText = input.value.trim();
+                
+                // Process tags - split by space and add # to each
+                let formattedTags = '';
+                if (tagText) {
+                    const tags = tagText.split(' ').filter(tag => tag.trim() !== '');
+                    formattedTags = tags.map(tag => `#${tag}`).join(' ');
+                }
+                
+                // Insert suffix before file extension for thumbnail
+                let thumbnailName = fileName;
+                if (suffix) {
+                    const dotIndex = fileName.lastIndexOf('.');
+                    if (dotIndex !== -1) {
+                        thumbnailName = fileName.substring(0, dotIndex) + suffix + fileName.substring(dotIndex);
+                    }
+                }
+                
+                code += `<a href="${fileName}" data-ngthumb="${thumbnailName}" data-ngdesc="${formattedTags}">${fileName}</a>\n`;
+            });
+            
+            codeOutput.textContent = code;
+        }
+        
+        function copyToClipboard() {
+            const code = codeOutput.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
