@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Grid Manager</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f7fa;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    
+    .settings-panel {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    
+    input[type="text"], 
+    textarea,
+    .file-import {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    .upload-area {
+      border: 3px dashed #ddd;
+      padding: 30px;
+      text-align: center;
+      background-color: #fafafa;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .upload-area.highlight {
+      background-color: #e8f4ff;
+      border-color: #3498db;
+    }
+    
+    .upload-area p {
+      font-size: 16px;
+      color: #7f8c8d;
+    }
+    
+    .btn {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+      margin-right: 10px;
+    }
+    
+    .btn:last-child {
+      margin-right: 0;
+    }
+    
+    .btn:hover {
+      background-color: #2980b9;
+    }
+    
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    
+    .image-card {
+      background-color: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .image-preview {
+      width: 100%;
+      height: 200px;
+      background-color: #eee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+    }
+    
+    .image-preview img {
+      max-width: 100%;
+      max-height: 100%;
+      transition: transform 0.3s ease;
+    }
+    
+    .placeholder-preview {
+      width: 100%;
+      height: 200px;
+      background-color: #eee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .placeholder-preview span {
+      color: #999;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .image-details {
+      padding: 15px;
+      overflow: hidden;
+    }
+    
+    .tag-input {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    
+    .tag-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    
+    .tag {
+      background-color: #e8f4ff;
+      color: #3498db;
+      padding: 5px 10px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+    
+    .tag button {
+      background: none;
+      border: none;
+      color: #7f8c8d;
+      margin-left: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    
+    .export-section {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    
+    .export-buttons {
+      margin-bottom: 20px;
+    }
+    
+    .export-code {
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-family: monospace;
+      white-space: pre;
+      max-height: 300px;
+    }
+    
+    /* Modal styles for image zoom */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-content {
+      max-width: 90%;
+      max-height: 90%;
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      color: #fff;
+      font-size: 30px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .import-section {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .file-input-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    
+    .file-input-container input[type="file"] {
+      flex: 1;
+    }
+    
+    .json-input-area {
+      margin-top: 10px;
+      width: 100%;
+      min-height: 100px;
+      font-family: monospace;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Image Grid Manager</h1>
+    
+    <div class="import-section">
+      <h2>Import Data</h2>
+      <div class="form-group">
+        <label for="jsonInput">Import from JSON</label>
+        <textarea id="jsonInput" class="json-input-area" placeholder="Paste your JSON data here"></textarea>
+      </div>
+      <div class="actions">
+        <button class="btn" id="importBtn">Import JSON</button>
+        <input type="file" id="jsonFileInput" accept=".json" style="display: none">
+        <button class="btn" id="importFileBtn">Import from File</button>
+      </div>
+    </div>
+    
+    <div class="settings-panel">
+      <h2>Global Settings</h2>
+      <div class="form-group">
+        <label for="universal-title">Universal Title Prefix (optional)</label>
+        <input type="text" id="universal-title" placeholder="Common title prefix for all images">
+      </div>
+      <div class="form-group">
+        <label for="universal-tags">Universal Tags (comma separated)</label>
+        <input type="text" id="universal-tags" placeholder="common-tag1, common-tag2">
+      </div>
+      <div class="form-group">
+        <label for="thumbnail-suffix">Thumbnail Suffix (optional)</label>
+        <input type="text" id="thumbnail-suffix" placeholder="e.g. 't' - image.png will become imaget.png">
+      </div>
+      <div class="form-group">
+        <label for="folder-path">Image Folder Path</label>
+        <input type="text" id="folder-path" placeholder="e.g. images/" value="images/">
+      </div>
+      <div class="form-group">
+        <label for="thumbnail-path">Thumbnail Folder Path</label>
+        <input type="text" id="thumbnail-path" placeholder="e.g. thumbnails/" value="thumbnails/">
+      </div>
+    </div>
+    
+    <div class="upload-area" id="dropArea">
+      <p>Drag and drop images here, or</p>
+      <input type="file" id="fileInput" multiple accept="image/*" style="display: none">
+      <button class="btn" id="browseBtn">Browse Files</button>
+    </div>
+    
+    <div class="grid-container" id="imageGrid">
+      <!-- Images will be added here -->
+    </div>
+    
+    <div class="export-section">
+      <h2>Export Code</h2>
+      <div class="export-buttons">
+        <button class="btn" id="exportBtn">Generate JSON</button>
+        <button class="btn" id="copyBtn">Copy to Clipboard</button>
+        <button class="btn" id="downloadBtn">Download JSON</button>
+      </div>
+      <div class="export-code" id="exportCode">
+        // Your JSON will appear here
+      </div>
+    </div>
+  </div>
+  
+  <!-- Image zoom modal -->
+  <div class="modal" id="imageModal">
+    <span class="modal-close">&times;</span>
+    <img class="modal-content" id="modalImage">
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Elements
+      const dropArea = document.getElementById('dropArea');
+      const fileInput = document.getElementById('fileInput');
+      const browseBtn = document.getElementById('browseBtn');
+      const imageGrid = document.getElementById('imageGrid');
+      const exportBtn = document.getElementById('exportBtn');
+      const copyBtn = document.getElementById('copyBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const exportCode = document.getElementById('exportCode');
+      const imageModal = document.getElementById('imageModal');
+      const modalImage = document.getElementById('modalImage');
+      const modalClose = document.querySelector('.modal-close');
+      const jsonInput = document.getElementById('jsonInput');
+      const importBtn = document.getElementById('importBtn');
+      const jsonFileInput = document.getElementById('jsonFileInput');
+      const importFileBtn = document.getElementById('importFileBtn');
+      
+      // Store image data
+      let imageData = [];
+      
+      // Handle drag and drop events
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+      });
+      
+      function highlight() {
+        dropArea.classList.add('highlight');
+      }
+      
+      function unhighlight() {
+        dropArea.classList.remove('highlight');
+      }
+      
+      // Handle file drop
+      dropArea.addEventListener('drop', handleDrop, false);
+      
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles(files);
+      }
+      
+      // Handle browse button
+      browseBtn.addEventListener('click', () => {
+        fileInput.click();
+      });
+      
+      fileInput.addEventListener('change', () => {
+        handleFiles(fileInput.files);
+      });
+      
+      // Process files
+      function handleFiles(files) {
+        Array.from(files).forEach(file => {
+          if (file.type.startsWith('image/')) {
+            addImageCard(file);
+          }
+        });
+      }
+      
+      // Add image card to grid
+      function addImageCard(file, importedData = null) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const imageId = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+          
+          // Create image data object
+          const newImageData = {
+            id: imageId,
+            file: file,
+            title: importedData ? importedData.title : "",
+            tags: importedData ? importedData.tags : [],
+            originalName: importedData ? getFileNameFromPath(importedData.image) : file.name
+          };
+          
+          imageData.push(newImageData);
+          
+          // Create card element
+          const card = document.createElement('div');
+          card.className = 'image-card';
+          card.dataset.id = imageId;
+          
+          card.innerHTML = `
+            <div class="image-preview">
+              <img src="${e.target.result}" alt="Image preview">
+            </div>
+            <div class="image-details">
+              <div class="form-group">
+                <label>Title</label>
+                <input type="text" class="title-input" placeholder="Enter image title" value="${importedData ? importedData.title : ''}">
+              </div>
+              <div class="form-group">
+                <label>Tags (comma separated)</label>
+                <input type="text" class="tags-input" placeholder="tag1, tag2, tag3">
+              </div>
+              <div class="tag-container"></div>
+              <div class="actions">
+                <button class="btn remove-btn">Remove</button>
+              </div>
+            </div>
+          `;
+          
+          imageGrid.appendChild(card);
+          
+          // Add event listeners to the new card
+          const titleInput = card.querySelector('.title-input');
+          const tagsInput = card.querySelector('.tags-input');
+          const removeBtn = card.querySelector('.remove-btn');
+          const imgPreview = card.querySelector('.image-preview');
+          
+          // Image preview click for zoom
+          imgPreview.addEventListener('click', () => {
+            modalImage.src = e.target.result;
+            imageModal.style.display = 'flex';
+          });
+          
+          titleInput.addEventListener('input', (e) => {
+            const image = imageData.find(img => img.id === imageId);
+            if (image) {
+              image.title = e.target.value;
+            }
+          });
+          
+          tagsInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+              e.preventDefault();
+              const tagValue = tagsInput.value.trim();
+              
+              if (tagValue) {
+                const image = imageData.find(img => img.id === imageId);
+                if (image) {
+                  // Split by commas and add each tag
+                  const newTags = tagValue.split(',').map(tag => tag.trim()).filter(tag => tag);
+                  
+                  image.tags = [...new Set([...image.tags, ...newTags])];
+                  
+                  // Clear input
+                  tagsInput.value = '';
+                  
+                  // Update tag display
+                  updateTagDisplay(card, image);
+                }
+              }
+            }
+          });
+          
+          removeBtn.addEventListener('click', () => {
+            imageData = imageData.filter(img => img.id !== imageId);
+            card.remove();
+          });
+          
+          // Populate tags if imported
+          if (importedData && importedData.tags && importedData.tags.length > 0) {
+            updateTagDisplay(card, newImageData);
+          }
+        };
+        
+        reader.readAsDataURL(file);
+      }
+      
+      // Add placeholder image card for imported data without actual image files
+      function addPlaceholderImageCard(importedData) {
+        const imageId = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+        
+        // Create image data object
+        const newImageData = {
+          id: imageId,
+          title: importedData.title || "",
+          tags: importedData.tags || [],
+          originalName: getFileNameFromPath(importedData.image),
+          placeholder: true,
+          imagePath: importedData.image,
+          thumbnailPath: importedData.thumbnail
+        };
+        
+        imageData.push(newImageData);
+        
+        // Create card element
+        const card = document.createElement('div');
+        card.className = 'image-card';
+        card.dataset.id = imageId;
+        
+        card.innerHTML = `
+          <div class="placeholder-preview">
+            <span>Image: ${importedData.image}<br>Thumbnail: ${importedData.thumbnail}</span>
+          </div>
+          <div class="image-details">
+            <div class="form-group">
+              <label>Title</label>
+              <input type="text" class="title-input" placeholder="Enter image title" value="${importedData.title || ''}">
+            </div>
+            <div class="form-group">
+              <label>Tags (comma separated)</label>
+              <input type="text" class="tags-input" placeholder="tag1, tag2, tag3">
+            </div>
+            <div class="tag-container"></div>
+            <div class="actions">
+              <button class="btn remove-btn">Remove</button>
+            </div>
+          </div>
+        `;
+        
+        imageGrid.appendChild(card);
+        
+        // Add event listeners to the new card
+        const titleInput = card.querySelector('.title-input');
+        const tagsInput = card.querySelector('.tags-input');
+        const removeBtn = card.querySelector('.remove-btn');
+        
+        titleInput.addEventListener('input', (e) => {
+          const image = imageData.find(img => img.id === imageId);
+          if (image) {
+            image.title = e.target.value;
+          }
+        });
+        
+        tagsInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            const tagValue = tagsInput.value.trim();
+            
+            if (tagValue) {
+              const image = imageData.find(img => img.id === imageId);
+              if (image) {
+                // Split by commas and add each tag
+                const newTags = tagValue.split(',').map(tag => tag.trim()).filter(tag => tag);
+                
+                image.tags = [...new Set([...image.tags, ...newTags])];
+                
+                // Clear input
+                tagsInput.value = '';
+                
+                // Update tag display
+                updateTagDisplay(card, image);
+              }
+            }
+          }
+        });
+        
+        removeBtn.addEventListener('click', () => {
+          imageData = imageData.filter(img => img.id !== imageId);
+          card.remove();
+        });
+        
+        // Populate tags
+        if (importedData.tags && importedData.tags.length > 0) {
+          updateTagDisplay(card, newImageData);
+        }
+      }
+      
+      // Helper function to extract filename from path
+      function getFileNameFromPath(path) {
+        return path.substring(path.lastIndexOf('/') + 1);
+      }
+      
+      // Update tag display
+      function updateTagDisplay(card, imageObj) {
+        const tagContainer = card.querySelector('.tag-container');
+        tagContainer.innerHTML = '';
+        
+        imageObj.tags.forEach(tag => {
+          const tagEl = document.createElement('span');
+          tagEl.className = 'tag';
+          tagEl.textContent = tag;
+          
+          const removeBtn = document.createElement('button');
+          removeBtn.textContent = '×';
+          removeBtn.addEventListener('click', () => {
+            imageObj.tags = imageObj.tags.filter(t => t !== tag);
+            updateTagDisplay(card, imageObj);
+          });
+          
+          tagEl.appendChild(removeBtn);
+          tagContainer.appendChild(tagEl);
+        });
+      }
+      
+      // Close modal when clicking the close button
+      modalClose.addEventListener('click', () => {
+        imageModal.style.display = 'none';
+      });
+      
+      // Close modal when clicking outside the image
+      imageModal.addEventListener('click', (e) => {
+        if (e.target === imageModal) {
+          imageModal.style.display = 'none';
+        }
+      });
+      
+      // Close modal with Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && imageModal.style.display === 'flex') {
+          imageModal.style.display = 'none';
+        }
+      });
+      
+      // Import JSON
+      importBtn.addEventListener('click', () => {
+        const jsonText = jsonInput.value.trim();
+        if (!jsonText) {
+          alert('Please paste JSON data first');
+          return;
+        }
+        
+        try {
+          const importedData = JSON.parse(jsonText);
+          
+          if (!Array.isArray(importedData)) {
+            alert('Invalid JSON format. Expected an array.');
+            return;
+          }
+          
+          // Clear existing grid
+          imageGrid.innerHTML = '';
+          imageData = [];
+          
+          // Process imported data
+          importedData.forEach(item => {
+            addPlaceholderImageCard(item);
+          });
+          
+          jsonInput.value = '';
+          
+        } catch (error) {
+          alert('Invalid JSON format: ' + error.message);
+        }
+      });
+      
+      // Import JSON from file
+      importFileBtn.addEventListener('click', () => {
+        jsonFileInput.click();
+      });
+      
+      jsonFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const jsonText = e.target.result;
+            const importedData = JSON.parse(jsonText);
+            
+            if (!Array.isArray(importedData)) {
+              alert('Invalid JSON format. Expected an array.');
+              return;
+            }
+            
+            // Clear existing grid
+            imageGrid.innerHTML = '';
+            imageData = [];
+            
+            // Process imported data
+            importedData.forEach(item => {
+              addPlaceholderImageCard(item);
+            });
+            
+          } catch (error) {
+            alert('Invalid JSON file: ' + error.message);
+          }
+        };
+        reader.readAsText(file);
+      });
+      
+      // Export JSON
+      exportBtn.addEventListener('click', () => {
+        const universalTitle = document.getElementById('universal-title').value;
+        const universalTags = document.getElementById('universal-tags').value;
+        const thumbnailSuffix = document.getElementById('thumbnail-suffix').value;
+        const folderPath = document.getElementById('folder-path').value;
+        const thumbnailPath = document.getElementById('thumbnail-path').value;
+        
+        // Process universal tags
+        let globalTags = [];
+        if (universalTags) {
+          globalTags = universalTags.split(',').map(tag => tag.trim()).filter(tag => tag);
+        }
+        
+        const exportData = imageData.map(img => {
+          // Handle regular image uploads
+          if (!img.placeholder) {
+            const fileName = img.originalName;
+            const fileNameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
+            const fileExt = fileName.substring(fileName.lastIndexOf('.'));
+            
+            // Apply thumbnail suffix if provided
+            const thumbnailName = thumbnailSuffix ? 
+              `${fileNameWithoutExt}${thumbnailSuffix}${fileExt}` : 
+              fileName;
+            
+            // Combine individual tags with universal tags
+            const combinedTags = [...new Set([...img.tags, ...globalTags])];
+            
+            return {
+              title: universalTitle ? `${universalTitle} ${img.title}` : img.title,
+              thumbnail: `${thumbnailPath}${thumbnailName}`,
+              image: `${folderPath}${fileName}`,
+              tags: combinedTags
+            };
+          } 
+          // Handle placeholder images (imported data)
+          else {
+            // Combine individual tags with universal tags
+            const combinedTags = [...new Set([...img.tags, ...globalTags])];
+            
+            return {
+              title: universalTitle ? `${universalTitle} ${img.title}` : img.title,
+              thumbnail: img.thumbnailPath,
+              image: img.imagePath,
+              tags: combinedTags
+            };
+          }
+        });
+        
+        const jsonData = JSON.stringify(exportData, null, 2);
+        exportCode.textContent = jsonData;
+      });
+      
+      // Copy to clipboard
+      copyBtn.addEventListener('click', () => {
+        const textarea = document.createElement('textarea');
+        textarea.value = exportCode.textContent;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        
+        // Show feedback
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+          copyBtn.textContent = originalText;
+        }, 2000);
+      });
+      
+      // Download JSON file
+      downloadBtn.addEventListener('click', () => {
+        const jsonData = exportCode.textContent;
+        if (jsonData && jsonData !== '// Your JSON will appear here') {
+          const blob = new Blob([jsonData], {type: 'application/json'});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'image-grid-data.json';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } else {
+          alert('Please generate JSON data first');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
