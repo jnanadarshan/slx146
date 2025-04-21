@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <title>Slide Gallery</title>
+  <style>
+    /* Minimalist flat design */
+    :root {
+      --primary-color: #5067c5;
+      --text-color: #333;
+      --background-color: #f8f8f8;
+      --card-color: #fff;
+      --border-color: #eaeaea;
+      --shadow-color: rgba(0,0,0,0.05);
+      --hover-color: #f0f2f5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+      transition: margin-left 0.3s;
+    }
+
+    .hamburger {
+      cursor: pointer;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 20px;
+      margin-right: 1rem;
+
+      margin-right: 1rem; /* Keep or adjust margin */
+      color: var(--primary-color); /* Set icon color */
+      font-size: 24px; /* Set icon size */
+    }
+    .hamburger:hover {
+      background-color: var(--hover-color); /* Example hover */
+      border-radius: 4px; /* Match other hover styles */
+    }
+
+
+    .search-section {
+      padding: 1.5rem;
+      background: var(--card-color);
+      border-radius: 4px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px var(--shadow-color);
+      position: relative;
+    }
+
+    .search-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .search-bar {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    .search-bar:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(80, 103, 197, 0.1);
+    }
+
+    .search-clear {
+      position: absolute;
+      right: 2rem;
+      top: 2.25rem;
+      color: #999;
+      cursor: pointer;
+      font-size: 0.875rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: var(--hover-color);
+      display: none;
+    }
+
+    .search-clear.visible {
+      display: block;
+    }
+
+    .tag-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .tag-button {
+      background-color: var(--hover-color);
+      border: none;
+      border-radius: 4px;
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+
+    .tag-button:hover {
+      background-color: rgba(80, 103, 197, 0.1);
+    }
+
+    .tag-button.active {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .slide-card {
+      background: var(--card-color);
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px var(--shadow-color);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+
+    .slide-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px var(--shadow-color);
+    }
+
+    .slide-thumbnail {
+      width: 100%;
+      height: 180px;
+      object-fit: contain; /* Changed from cover to contain */
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .slide-info {
+      padding: 1rem;
+    }
+
+    .slide-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+      color: var(--text-color);
+    }
+
+    .slide-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.5rem;
+    }
+
+    .slide-tag {
+      background: var(--hover-color);
+      color: var(--primary-color);
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .slide-tag:hover {
+      background: rgba(80, 103, 197, 0.1);
+    }
+
+    .no-results {
+      text-align: center;
+      grid-column: 1 / -1;
+      padding: 2rem;
+      color: #666;
+      font-style: italic;
+    }
+    
+    /* Sidebar styles */
+    .sidebar {
+      height: 100%;
+      width: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: var(--card-color);
+      overflow-x: hidden;
+      transition: 0.3s;
+      padding-top: 60px;
+      box-shadow: 0 0 15px var(--shadow-color);
+      z-index: 99;
+    }
+    
+    .sidebar.open {
+      width: 280px;
+    }
+    
+    .sidebar-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .sidebar-content {
+      padding: 1rem;
+      overflow-y: auto;
+      max-height: calc(100% - 60px);
+    }
+    
+    .alphabetical-section {
+      margin-bottom: 1.25rem;
+    }
+    
+    .alphabet-letter {
+      font-weight: 500;
+      color: var(--primary-color);
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+      padding-left: 0.25rem;
+      border-left: 2px solid var(--primary-color);
+    }
+    
+    .tag-list {
+      margin-left: 0.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    
+    .sidebar .tag-button {
+      margin-bottom: 0.25rem;
+    }
+    
+    .close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-color);
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Modal for image zoom */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.85);
+      overflow: auto;
+    }
+    
+    .modal-content {
+      margin: auto;
+      display: block;
+      max-width: 90%;
+      max-height: 85vh;
+      margin-top: 2%;
+      object-fit: contain;
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      color: #f1f1f1;
+      font-size: 2rem;
+      font-weight: normal;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .modal-title {
+      text-align: center;
+      color: white;
+      padding: 0.5rem;
+      margin-top: 1rem;
+      font-weight: 400;
+      font-size: 1rem;
+    }
+    
+    /* Animation for zoom modal */
+    @keyframes fadeIn {
+      from {opacity: 0}
+      to {opacity: 1}
+    }
+    
+    .modal-content {
+      animation: fadeIn 0.4s;
+    }
+    
+    /* Overlay when sidebar is open on mobile */
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.3);
+      z-index: 98;
+      backdrop-filter: blur(2px);
+    }
+    
+    /* Media queries for responsive design */
+    @media screen and (max-width: 768px) {
+      .container.sidebar-open {
+        margin-left: 0;
+      }
+      .sidebar.open {
+        width: 85%;
+      }
+      .overlay.active {
+        display: block;
+      }
+      .gallery {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay"></div>
+  
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>Tag Filters</h2>
+      <span class="close-btn" id="closeSidebar">&times;</span>
+    </div>
+    <div class="sidebar-content" id="alphabeticalTags">
+      <!-- Alphabetically sorted tags will appear here -->
+    </div>
+  </div>
+  
+  <div class="container" id="mainContainer">
+    <div class="search-section">
+      <div class="search-container">
+        <div class="hamburger" id="hamburgerMenu">
+            <span class="material-symbols-outlined">menu</span>
+        </div>
+        <input type="text" class="search-bar" id="searchBar" placeholder="Search slides by tags or title...">
+      </div>
+      <span class="search-clear" id="searchClear">ESC to clear</span>
+      
+      <div class="tag-filters" id="popularTags">
+        <!-- Popular tags will be generated here -->
+      </div>
+    </div>
+
+    <div class="gallery" id="slideGallery">
+      <!-- Slides will be generated here -->
+    </div>
+  </div>
+  
+  <div id="imageModal" class="modal">
+    <span class="modal-close" id="closeModal">&times;</span>
+    <img class="modal-content" id="modalImage">
+    <div class="modal-title" id="modalTitle"></div>
+  </div>
+
+  <script>
+    // Sample slide data - you would typically load this from a JSON file
+    const slideData = [
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_40t.png",
+    "image": "images/ACN_Value_Untangled_40.png",
+    "tags": [
+      "bar-chart",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_26t.png",
+    "image": "images/ACN_Value_Untangled_26.png",
+    "tags": [
+      "content",
+      "infographic",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_15t.png",
+    "image": "images/ACN_Value_Untangled_15.png",
+    "tags": [
+      "infographic",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_39t.png",
+    "image": "images/ACN_Value_Untangled_39.png",
+    "tags": [
+      "content",
+      "map",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_12t.png",
+    "image": "images/ACN_Value_Untangled_12.png",
+    "tags": [
+      "infographic",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_4t.png",
+    "image": "images/ACN_Value_Untangled_4.png",
+    "tags": [
+      "bar-chart",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_24t.png",
+    "image": "images/ACN_Value_Untangled_24.png",
+    "tags": [
+      "text",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_6t.png",
+    "image": "images/ACN_Value_Untangled_6.png",
+    "tags": [
+      "bar-chart",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_30t.png",
+    "image": "images/ACN_Value_Untangled_30.png",
+    "tags": [
+      "text",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_31t.png",
+    "image": "images/ACN_Value_Untangled_31.png",
+    "tags": [
+      "text",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_7t.png",
+    "image": "images/ACN_Value_Untangled_7.png",
+    "tags": [
+      "text",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_35t.png",
+    "image": "images/ACN_Value_Untangled_35.png",
+    "tags": [
+      "text",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_5t.png",
+    "image": "images/ACN_Value_Untangled_5.png",
+    "tags": [
+      "content",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_2t.png",
+    "image": "images/ACN_Value_Untangled_2.png",
+    "tags": [
+      "index",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_44t.png",
+    "image": "images/ACN_Value_Untangled_44.png",
+    "tags": [
+      "authors",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_16t.png",
+    "image": "images/ACN_Value_Untangled_16.png",
+    "tags": [
+      "text-gradiant",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_38t.png",
+    "image": "images/ACN_Value_Untangled_38.png",
+    "tags": [
+      "opening",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_10t.png",
+    "image": "images/ACN_Value_Untangled_10.png",
+    "tags": [
+      "text",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_9t.png",
+    "image": "images/ACN_Value_Untangled_9.png",
+    "tags": [
+      "content",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_37t.png",
+    "image": "images/ACN_Value_Untangled_37.png",
+    "tags": [
+      "text",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_32t.png",
+    "image": "images/ACN_Value_Untangled_32.png",
+    "tags": [
+      "text-image",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_8t.png",
+    "image": "images/ACN_Value_Untangled_8.png",
+    "tags": [
+      "infographic",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_20t.png",
+    "image": "images/ACN_Value_Untangled_20.png",
+    "tags": [
+      "text",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_23t.png",
+    "image": "images/ACN_Value_Untangled_23.png",
+    "tags": [
+      "text-image",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_41t.png",
+    "image": "images/ACN_Value_Untangled_41.png",
+    "tags": [
+      "text-image",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_27t.png",
+    "image": "images/ACN_Value_Untangled_27.png",
+    "tags": [
+      "text",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_43t.png",
+    "image": "images/ACN_Value_Untangled_43.png",
+    "tags": [
+      "text-image",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_22t.png",
+    "image": "images/ACN_Value_Untangled_22.png",
+    "tags": [
+      "text-image",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_17t.png",
+    "image": "images/ACN_Value_Untangled_17.png",
+    "tags": [
+      "text-image",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_14t.png",
+    "image": "images/ACN_Value_Untangled_14.png",
+    "tags": [
+      "text-image",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_29t.png",
+    "image": "images/ACN_Value_Untangled_29.png",
+    "tags": [
+      "text-image",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_18t.png",
+    "image": "images/ACN_Value_Untangled_18.png",
+    "tags": [
+      "text-image",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_19t.png",
+    "image": "images/ACN_Value_Untangled_19.png",
+    "tags": [
+      "opening",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_34t.png",
+    "image": "images/ACN_Value_Untangled_34.png",
+    "tags": [
+      "text-imagebg",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_33t.png",
+    "image": "images/ACN_Value_Untangled_33.png",
+    "tags": [
+      "text-image",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_11t.png",
+    "image": "images/ACN_Value_Untangled_11.png",
+    "tags": [
+      "opening",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_42t.png",
+    "image": "images/ACN_Value_Untangled_42.png",
+    "tags": [
+      "text-image",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_3t.png",
+    "image": "images/ACN_Value_Untangled_3.png",
+    "tags": [
+      "opening",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_13t.png",
+    "image": "images/ACN_Value_Untangled_13.png",
+    "tags": [
+      "content-image",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_36t.png",
+    "image": "images/ACN_Value_Untangled_36.png",
+    "tags": [
+      "opening",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_28t.png",
+    "image": "images/ACN_Value_Untangled_28.png",
+    "tags": [
+      "quote",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_1t.png",
+    "image": "images/ACN_Value_Untangled_1.png",
+    "tags": [
+      "opening",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_21t.png",
+    "image": "images/ACN_Value_Untangled_21.png",
+    "tags": [
+      "content-image",
+      "accenture",
+      "value-unlocked"
+    ]
+  },
+  {
+    "title": "Accenture Value Unlocked ",
+    "thumbnail": "images/ACN_Value_Untangled_25t.png",
+    "image": "images/ACN_Value_Untangled_25.png",
+    "tags": [
+      "opening",
+      "accenture",
+      "value-unlocked"
+    ]
+  }
+];
+
+    // Function to shuffle array (for random display)
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // Function to get all unique tags
+    function getAllTags() {
+      const tags = new Set();
+      slideData.forEach(slide => {
+        slide.tags.forEach(tag => tags.add(tag));
+      });
+      return Array.from(tags).sort();
+    }
+
+    // Function to organize tags alphabetically
+    function organizeTagsAlphabetically() {
+      const tags = getAllTags();
+      const tagsByLetter = {};
+      
+      tags.forEach(tag => {
+        const firstLetter = tag.charAt(0).toUpperCase();
+        if (!tagsByLetter[firstLetter]) {
+          tagsByLetter[firstLetter] = [];
+        }
+        tagsByLetter[firstLetter].push(tag);
+      });
+      
+      return tagsByLetter;
+    }
+
+    // Function to render alphabetical tags in sidebar
+    function renderAlphabeticalTags() {
+      const tagsByLetter = organizeTagsAlphabetically();
+      const container = document.getElementById('alphabeticalTags');
+      container.innerHTML = '';
+      
+      Object.keys(tagsByLetter).sort().forEach(letter => {
+        const section = document.createElement('div');
+        section.className = 'alphabetical-section';
+        
+        const letterSpan = document.createElement('span');
+        letterSpan.className = 'alphabet-letter';
+        letterSpan.textContent = letter;
+        section.appendChild(letterSpan);
+        
+        const tagList = document.createElement('div');
+        tagList.className = 'tag-list';
+        
+        tagsByLetter[letter].forEach(tag => {
+          const tagButton = document.createElement('button');
+          tagButton.className = 'tag-button';
+          tagButton.textContent = tag;
+          tagButton.dataset.tag = tag;
+          tagButton.addEventListener('click', function(e) {
+            filterByTag(e);
+            toggleSidebar(); // Close sidebar after selection on mobile
+          });
+          tagList.appendChild(tagButton);
+        });
+        
+        section.appendChild(tagList);
+        container.appendChild(section);
+      });
+    }
+
+    // Function to render popular tags
+    function renderPopularTags() {
+      const tags = getAllTags();
+      const container = document.getElementById('popularTags');
+      container.innerHTML = '';
+      
+      // Add "All" button
+      const allButton = document.createElement('button');
+      allButton.className = 'tag-button active';
+      allButton.textContent = 'All';
+      allButton.dataset.tag = 'all';
+      allButton.addEventListener('click', filterByTag);
+      container.appendChild(allButton);
+      
+      // Add top tags (could implement logic to show most used tags)
+      tags.slice(0, 8).forEach(tag => {
+        const tagButton = document.createElement('button');
+        tagButton.className = 'tag-button';
+        tagButton.textContent = tag;
+        tagButton.dataset.tag = tag;
+        tagButton.addEventListener('click', filterByTag);
+        container.appendChild(tagButton);
+      });
+    }
+
+    // Function to render slide cards
+    function renderSlides(slides) {
+      const gallery = document.getElementById('slideGallery');
+      gallery.innerHTML = '';
+      
+      if (slides.length === 0) {
+        const noResults = document.createElement('div');
+        noResults.className = 'no-results';
+        noResults.textContent = 'No slides match your search.';
+        gallery.appendChild(noResults);
+        return;
+      }
+      
+      // Shuffle the slides array for random display
+      const shuffledSlides = shuffleArray([...slides]);
+      
+      shuffledSlides.forEach(slide => {
+        const card = document.createElement('div');
+        card.className = 'slide-card';
+        
+        const image = document.createElement('img');
+        image.className = 'slide-thumbnail';
+        image.src = slide.thumbnail;
+        image.alt = slide.title;
+        image.loading = "lazy"; // Lazy load images
+        image.addEventListener('click', function() {
+          openImageModal(slide.image, slide.title);
+        });
+        card.appendChild(image);
+        
+        const info = document.createElement('div');
+        info.className = 'slide-info';
+        
+        const title = document.createElement('h3');
+        title.className = 'slide-title';
+        title.textContent = slide.title;
+        info.appendChild(title);
+        
+        const tags = document.createElement('div');
+        tags.className = 'slide-tags';
+        
+        slide.tags.forEach(tag => {
+          const tagSpan = document.createElement('span');
+          tagSpan.className = 'slide-tag';
+          tagSpan.textContent = tag;
+          tagSpan.addEventListener('click', (e) => {
+            e.stopPropagation();
+            filterByTagName(tag);
+          });
+          tags.appendChild(tagSpan);
+        });
+        
+        info.appendChild(tags);
+        card.appendChild(info);
+        gallery.appendChild(card);
+      });
+    }
+
+    // Function to filter slides by search query
+    function filterSlides() {
+      const searchQuery = document.getElementById('searchBar').value.toLowerCase();
+      const activeTag = document.querySelector('.tag-button.active')?.dataset.tag;
+      
+      // Show/hide ESC to clear text
+      document.getElementById('searchClear').classList.toggle('visible', 
+        searchQuery !== '' || (activeTag && activeTag !== 'all'));
+      
+      let filteredSlides = slideData;
+      
+      // Filter by active tag if it exists and isn't "all"
+      if (activeTag && activeTag !== 'all') {
+        filteredSlides = filteredSlides.filter(slide => 
+          slide.tags.includes(activeTag));
+      }
+      
+      // Filter by search query
+      if (searchQuery) {
+        filteredSlides = filteredSlides.filter(slide => 
+          slide.title.toLowerCase().includes(searchQuery) || 
+          slide.tags.some(tag => tag.includes(searchQuery)));
+      }
+      
+      renderSlides(filteredSlides);
+    }
+
+    // Function to clear all filters
+    function clearFilters() {
+      // Clear search box
+      document.getElementById('searchBar').value = '';
+      
+      // Reset active tag to "All"
+      document.querySelectorAll('.tag-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector('.tag-button[data-tag="all"]').classList.add('active');
+      
+      // Hide "ESC to clear" text
+      document.getElementById('searchClear').classList.remove('visible');
+      
+      // Rerender all slides
+      renderSlides(slideData);
+    }
+
+    // Function to filter by tag from button click
+    function filterByTag(e) {
+      // Remove active class from all buttons
+      document.querySelectorAll('.tag-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Add active class to clicked button
+      e.target.classList.add('active');
+      
+      filterSlides();
+    }
+
+    // Function to filter by tag name (used when clicking on tags in slide cards)
+    function filterByTagName(tagName) {
+      // Remove active class from all buttons
+      document.querySelectorAll('.tag-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Find and activate the button with this tag
+      const tagButton = document.querySelector(`.tag-button[data-tag="${tagName}"]`);
+      if (tagButton) {
+        tagButton.classList.add('active');
+      } else {
+        // If no button exists for this tag (could happen with alphabetical tags)
+        // Find the "All" button and keep it active
+        document.querySelector('.tag-button[data-tag="all"]').classList.add('active');
+      }
+      
+      // Update search bar to include this tag
+      document.getElementById('searchBar').value = tagName;
+      
+      filterSlides();
+    }
+    
+    // Function to toggle sidebar
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('overlay');
+      const container = document.getElementById('mainContainer');
+      
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('active');
+      container.classList.toggle('sidebar-open');
+    }
+    
+    // Function to open image modal
+    function openImageModal(src, title) {
+      const modal = document.getElementById('imageModal');
+      const modalImg = document.getElementById('modalImage');
+      const modalTitle = document.getElementById('modalTitle');
+      
+      modal.style.display = "block";
+      
+      // Show loading text
+      modalTitle.textContent = "Loading...";
+      
+      // Create a new image to preload
+      const img = new Image();
+      img.onload = function() {
+        modalImg.src = src;
+        modalTitle.textContent = title;
+      };
+      img.src = src;
+    }
+    
+    // Initialize the gallery and sidebar functionality
+    function initGallery() {
+      renderPopularTags();
+      renderAlphabeticalTags();
+      renderSlides(slideData);
+      
+      // Add event listener for search
+      document.getElementById('searchBar').addEventListener('input', filterSlides);
+      
+      // Clear filters with search clear button
+      document.getElementById('searchClear').addEventListener('click', clearFilters);
+      
+      document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") {
+          const sidebar = document.getElementById('sidebar');
+          const modal = document.getElementById('imageModal');
+          const searchBar = document.getElementById('searchBar');
+          const activeTagButton = document.querySelector('.tag-button.active');
+
+          if (modal.style.display === "block") {
+            // 1. Close modal if open
+            modal.style.display = "none";
+          } else if (sidebar.classList.contains('open')) {
+            // 2. Close sidebar if open (and modal is not open)
+            toggleSidebar();
+          } else if (searchBar.value !== '' || (activeTagButton && activeTagButton.dataset.tag !== 'all')) {
+            // 3. Clear filters if sidebar and modal are closed
+            clearFilters();
+          }
+        }
+      });
+      
+      // Sidebar toggle functionality
+      document.getElementById('hamburgerMenu').addEventListener('click', toggleSidebar);
+      document.getElementById('closeSidebar').addEventListener('click', toggleSidebar);
+      document.getElementById('overlay').addEventListener('click', toggleSidebar);
+      
+      // Modal close functionality
+      const modal = document.getElementById('imageModal');
+      document.getElementById('closeModal').addEventListener('click', function() {
+        modal.style.display = "none";
+      });
+      
+      // Close modal when clicking outside the image
+      modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+          modal.style.display = "none";
+        }
+      });
+    }
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', initGallery);
+  </script>
+</body>
+</html>
