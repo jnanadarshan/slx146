@@ -426,6 +426,39 @@
     .scroll-up.visible {
       display: flex;
     }
+
+    /* Add these styles for the copy button */
+    .modal-copy {
+      position: absolute;
+      top: calc(1rem + 40px + 10px); /* Position below close button (top + height + gap) */
+      right: 1.5rem; /* Align with close button */
+      color: #f1f1f1;
+      font-size: 1.5rem; /* Slightly smaller than close */
+      font-weight: normal;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      transition: background 0.2s ease; /* Add transition */
+    }
+    
+    .modal-copy:hover {
+      background: rgba(255, 255, 255, 0.2); /* Add hover effect */
+    }
+    
+    .modal-copy .material-symbols-outlined {
+        font-size: 20px; /* Adjust icon size if needed */
+    }
+    
+    /* Optional: Adjust close button slightly if needed */
+    .modal-close {
+        /* No changes needed unless you want to adjust its position */
+    }
+    
   </style>
 </head>
 <body>
@@ -468,6 +501,9 @@
   
   <div id="imageModal" class="modal">
     <span class="modal-close" id="closeModal">&times;</span>
+    <span class="modal-copy" id="copyImageBtn" title="Copy Image">
+    <span class="material-symbols-outlined">content_copy</span>
+    </span>
     <img class="modal-content" id="modalImage">
     <div class="modal-title" id="modalTitle"></div>
   </div>
@@ -1640,7 +1676,63 @@
           behavior: 'smooth'
         });
       });
+
     }
+
+    // Copy Image to Clipboard
+
+    const copyImageBtn = document.getElementById('copyImageBtn');
+    const modalImage = document.getElementById('modalImage');
+
+    copyImageBtn.addEventListener('click', async (event) => {
+        event.stopPropagation(); // Prevent modal from closing if clicking the button
+
+        if (!navigator.clipboard || !navigator.clipboard.write) {
+            alert('Clipboard API not supported by your browser.');
+            return;
+        }
+
+        const imageUrl = modalImage.src;
+        if (!imageUrl) {
+            alert('No image source found.');
+            return;
+        }
+
+        try {
+            // Fetch the image data as a Blob
+            const response = await fetch(imageUrl);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const blob = await response.blob();
+
+            // Create a ClipboardItem
+            const item = new ClipboardItem({ [blob.type]: blob });
+
+            // Write the item to the clipboard
+            await navigator.clipboard.write([item]);
+
+            // Provide user feedback (optional)
+            const originalIcon = copyImageBtn.innerHTML;
+            copyImageBtn.innerHTML = '<span class="material-symbols-outlined">done</span>'; // Show checkmark
+            copyImageBtn.title = 'Copied!';
+            setTimeout(() => {
+                copyImageBtn.innerHTML = originalIcon; // Restore original icon
+                copyImageBtn.title = 'Copy Image';
+            }, 1500); // Restore after 1.5 seconds
+
+        } catch (err) {
+            console.error('Failed to copy image: ', err);
+            alert('Failed to copy image. Check console for details.');
+            // Optionally restore icon immediately on error
+            const originalIcon = '<span class="material-symbols-outlined">content_copy</span>';
+            copyImageBtn.innerHTML = originalIcon;
+            copyImageBtn.title = 'Copy Image';
+        }
+    });
+
+
+  //End Copy Image to Clipboard
 
     // Theme management functions
     function setTheme(theme) {
