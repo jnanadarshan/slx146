@@ -1,0 +1,125 @@
+name: Extract Tags from HTML
+
+on:
+  push:
+    branches:
+      - main # Or your default branch (e.g., master)
+    paths:
+      - 'slxv3.html' # Trigger only when this specific HTML file changes
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+
+jobs:
+  extract-tags:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Grant permission to write back to the repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10' # Or your preferred Python version
+
+      - name: Install dependencies
+        run: pip install beautifulsoup4 lxml
+
+      - name: Run tag extraction script
+        id: extract
+        run: |
+          python - <<EOF
+          import json
+          from bs4 import BeautifulSoup
+          import os
+          import sys # Import sys for exit codes
+
+          html_file_path = 'slxv3.html' # Relative path to your HTML file in the repo
+          json_output_path = 'alltags.json'
+          all_tags = set()
+          found_tags = False
+
+          print(f"Attempting to read HTML file: {html_file_path}")
+          if not os.path.exists(html_file_path):
+              print(f"::error file={html_file_path}::HTML file not found at the specified path.")
+              sys.exit(1) # Exit with error code
+
+          try:
+              with open(html_file_path, 'r', encoding='utf-8') as f:
+                  soup = BeautifulSoup(f, 'lxml') # Use lxml parser for robustness
+
+              gallery_div = soup.find('div', {'ID': 'SlideGear'}) # Case-sensitive ID match
+              if gallery_div:
+                  print("Found gallery div.")
+                  links = gallery_div.find_all('a')
+                  print(f"Found {len(links)} links inside the gallery div.")
+                  for link in links:
+                      desc = link.get('data-ngdesc')
+                      if desc:
+                          parts = desc.split()
+                          for part in parts:
+                              if part.startswith('#'):
+                                  tag = part[1:] # Remove '#'
+                                  if tag: # Ensure tag is not empty after removing '#'
+                                      all_tags.add(tag)
+                                      found_tags = True
+              else:
+                  print(f"::warning file={html_file_path}::Could not find div with ID 'SlideGear'. No tags extracted.")
+                  # Decide if this is an error or just a warning. Let's proceed but log it.
+
+              if not found_tags and not gallery_div:
+                   print("No gallery div found, creating empty tags file.")
+              elif not found_tags and gallery_div:
+                   print("Gallery div found, but no tags extracted from data-ngdesc attributes.")
+
+              sorted_tags = sorted(list(all_tags))
+
+              print(f"Extracted {len(sorted_tags)} unique tags.")
+
+              # Check if the file content would change
+              current_content = None
+              if os.path.exists(json_output_path):
+                  try:
+                      with open(json_output_path, 'r', encoding='utf-8') as f_current:
+                          current_content = json.load(f_current)
+                  except json.JSONDecodeError:
+                      print(f"::warning::Could not decode existing {json_output_path}. Will overwrite.")
+                  except Exception as e_read:
+                       print(f"::warning::Error reading existing {json_output_path}: {e_read}. Will overwrite.")
+
+
+              new_content_json = json.dumps(sorted_tags, indent=2, ensure_ascii=False)
+              existing_content_json = json.dumps(current_content, indent=2, ensure_ascii=False) if current_content is not None else None
+
+              if new_content_json != existing_content_json:
+                  print(f"Changes detected. Writing tags to {json_output_path}")
+                  with open(json_output_path, 'w', encoding='utf-8') as f_out:
+                      f_out.write(new_content_json + '\n') # Add newline for POSIX compatibility
+                  # Set output for the next step
+                  print("::set-output name=changes_detected::true")
+              else:
+                  print(f"No changes detected in tags. {json_output_path} is up-to-date.")
+                  print("::set-output name=changes_detected::false")
+
+
+          except Exception as e:
+              print(f"::error::An error occurred during tag extraction: {e}")
+              sys.exit(1) # Exit with error code
+          EOF
+
+      - name: Commit and push changes
+        if: steps.extract.outputs.changes_detected == 'true' # Only run if changes were detected
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add alltags.json
+          git commit -m "Update alltags.json with latest tags [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Default token has write permissions
+
+      - name: No changes detected
+        if: steps.extract.outputs.changes_detected == 'false'
+        run: echo "No changes to commit for alltags.json."
+
