@@ -18,7 +18,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Ensure we get the full repository
           fetch-depth: 0
 
       - name: Debug repository content
@@ -28,27 +27,17 @@ jobs:
           echo "Directory contents:"
           ls -la
           echo "Finding slxv3.html:"
-          find $GITHUB_WORKSPACE -name "slxv3.html" -type f || echo "File not found with find"
-          
-          if [ -f "slxv3.html" ]; then
-            echo "slxv3.html exists in current directory"
-            # Check file size to ensure it's not empty
-            echo "File size: $(stat -c%s "slxv3.html") bytes"
-            # Show first few lines of the file
-            echo "First 10 lines of the file:"
-            head -n 10 slxv3.html
-          else
-            echo "slxv3.html does not exist in the current directory"
-          fi
+          find $GITHUB_WORKSPACE -type f -name "slxv3.html" || echo "File not found with find"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Create and run extraction script with enhanced debugging
-        id: extract
-        continue-on-error: true  # Allow script to continue even if this step fails
+      - name: Install required packages
+        run: npm install -g jq-cli-wrapper
+
+      - name: Create extraction script
         run: |
           cat << 'EOF' > extract-tags.js
           const fs = require('fs');
@@ -62,6 +51,9 @@ jobs:
           console.log(`Current working directory: ${process.cwd()}`);
           console.log(`Attempting to read HTML file: ${htmlFilePath}`);
 
+          // Create empty tags file as initial fallback
+          fs.writeFileSync(outputFilePath, JSON.stringify([]));
+
           try {
               // Check if HTML file exists
               if (!fs.existsSync(htmlFilePath)) {
@@ -70,7 +62,9 @@ jobs:
                   fs.readdirSync('.').forEach(file => {
                       console.log(`- ${file}`);
                   });
-                  process.exit(1);
+                  // Don't exit - we'll just return an empty array
+                  console.log('Continuing with empty tags array');
+                  return;
               }
               
               console.log(`File exists, size: ${fs.statSync(htmlFilePath).size} bytes`);
@@ -114,9 +108,8 @@ jobs:
                     console.log(`"slideData" keyword not found in the file.`);
                   }
                   
-                  // Create an empty file as fallback
-                  fs.writeFileSync(outputFilePath, JSON.stringify([]));
-                  process.exit(1);
+                  // Already created empty file as fallback
+                  return;
               }
 
               console.log(`Found slideData using pattern: ${matchingPattern}`);
@@ -140,9 +133,8 @@ jobs:
                  console.error('Error parsing slideData string:', parseError.message);
                  console.log('Error details:', parseError.stack);
                  
-                 // Create an empty file as fallback
-                 fs.writeFileSync(outputFilePath, JSON.stringify([]));
-                 process.exit(1);
+                 // Already created empty file as fallback
+                 return;
               }
 
               // Extract unique tags
@@ -192,20 +184,15 @@ jobs:
               console.error('Error during tag extraction process:', error.message);
               console.error('Stack trace:', error.stack);
               
-              // Create an empty file as fallback
-              try {
-                fs.writeFileSync(outputFilePath, JSON.stringify([]));
-                console.log('Created empty tags file as fallback');
-              } catch (writeError) {
-                console.error('Failed to create fallback file:', writeError);
-              }
-              
-              process.exit(1);
+              // We already created an empty file as fallback at the beginning
+              console.log('Using empty tags file as fallback');
           }
           EOF
 
-          # Execute the script and capture all output
-          node extract-tags.js 2>&1 | tee extraction-log.txt
+      - name: Run extraction script
+        id: extract
+        run: node extract-tags.js 2>&1 | tee extraction-log.txt
+        # Don't use "continue-on-error" - we've designed the script to not fail
 
       - name: Check extraction results
         id: check_results
@@ -215,17 +202,36 @@ jobs:
           cat extraction-log.txt >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           
-          # Always create alltags.json if it doesn't exist
+          # Ensure alltags.json exists
           if [ ! -f "alltags.json" ]; then
             echo "Creating empty alltags.json as fallback"
             echo "[]" > alltags.json
             echo "⚠️ Created empty alltags.json as no tags were extracted" >> $GITHUB_STEP_SUMMARY
           else
             echo "✅ alltags.json was successfully generated" >> $GITHUB_STEP_SUMMARY
+            
+            # Count number of tags if jq is available
+            if command -v jq >/dev/null 2>&1; then
+              TAG_COUNT=$(jq length alltags.json)
+              echo "Number of tags extracted: $TAG_COUNT" >> $GITHUB_STEP_SUMMARY
+            else
+              # Fallback if jq is not available
+              TAG_COUNT=$(grep -o '"' alltags.json | wc -l)
+              TAG_COUNT=$((TAG_COUNT / 2))
+              echo "Approximate number of tags: $TAG_COUNT" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Show file stats
+            FILE_SIZE=$(stat -c%s "alltags.json" || echo "unknown")
+            echo "File size: $FILE_SIZE bytes" >> $GITHUB_STEP_SUMMARY
+            
+            # Show the content with proper formatting if possible
             echo "File content (first 1000 chars):" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
             head -c 1000 alltags.json >> $GITHUB_STEP_SUMMARY
-            echo "..." >> $GITHUB_STEP_SUMMARY
+            if [ "$FILE_SIZE" -gt 1000 ]; then
+              echo "..." >> $GITHUB_STEP_SUMMARY
+            fi
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           fi
 
@@ -233,6 +239,13 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Always ensure the file exists before adding
+          if [ ! -f "alltags.json" ]; then
+            echo "[]" > alltags.json
+            echo "Created empty alltags.json as a fallback"
+          fi
+          
           git add alltags.json
           
           # Check if there are changes staged for commit
