@@ -49,62 +49,57 @@ jobs:
           console.log(`Output JSON file: ${outputFilePath}`);
 
           try {
-            const htmlContent = fs.readFileSync(htmlFilePath, 'utf8');
+              const htmlContent = fs.readFileSync(htmlFilePath, 'utf8');
 
-            // Regex to find the 'const slideData = [...]' block
-            // It captures the array content (including brackets)
-            const slideDataRegex = /const\s+slideData\s*=\s*(\[[\s\S]*?\]);/m;
-            const match = htmlContent.match(slideDataRegex);
+              // Regex to find the 'const slideData = [...]' block
+              // It captures the array content (including brackets)
+              const slideDataRegex = /const\s+slideData\s*=\s*(\[[\s\S]*?\]);/m;
+              const match = htmlContent.match(slideDataRegex);
 
-            if (!match || !match[1]) {
-                throw new Error('Could not find slideData array in the HTML file.');
-            }
+              if (!match || !match[1]) {
+                  throw new Error('Could not find slideData array in the HTML file.');
+              }
 
-            let slideDataString = match[1];
-            console.log('Successfully extracted slideData string.');
+              let slideDataString = match[1];
+              console.log('Successfully extracted slideData string.');
 
-            // --- Attempt to parse the extracted string as JSON ---
-            // This assumes the content within the brackets is valid JSON.
-            // For more complex JS, a proper parser might be needed, but this works for the provided structure.
-            // --- Attempt to parse the extracted string as JSON ---
-            let slides = [];
-            try {
-                // First, ensure the string is valid JSON
-                slideDataString = slideDataString.trim();
-                if (!slideDataString.startsWith('[') || !slideDataString.endsWith(']')) {
-                    throw new Error('Extracted slideData string is not wrapped in square brackets.');
-                }
-
-                slides = JSON.parse(slideDataString); // Parse the string as JSON
-                console.log(`Successfully parsed ${slides.length} slide objects.`);
-            } catch (parseError) {
-                console.error('Error parsing slideData string:', parseError);
-                console.error('Extracted string:', slideDataString); // Log the string for debugging
-                throw new Error(`Failed to parse the extracted slideData array. Ensure it is valid JSON. Error: ${parseError.message}`);
-            }                               
+              // --- Attempt to parse the extracted string as JSON ---
+              // This assumes the content within the brackets is valid JSON.
+              // For more complex JS, a proper parser might be needed, but this works for the provided structure.
+              let slides = [];
+              try {
+                 // Using Function constructor for safer evaluation than direct eval
+                 const parseFunction = new Function(`return ${slideDataString};`);
+                 slides = parseFunction();
+                 console.log(`Successfully parsed ${slides.length} slide objects.`);
+              } catch (parseError) {
+                 console.error('Error parsing slideData string:', parseError);
+                 console.error('Extracted string:', slideDataString); // Log the string for debugging
+                 throw new Error(`Failed to parse the extracted slideData array. Is it valid JSON/JS? Error: ${parseError.message}`);
+              }
 
 
-            const allTags = new Set();
-            slides.forEach((slide, index) => {
-                if (slide && slide.tags && Array.isArray(slide.tags)) {
-                    slide.tags.forEach(tag => {
-                        if (typeof tag === 'string' && tag.trim() !== '') {
-                            allTags.add(tag.trim());
-                        } else {
-                            console.warn(`Found invalid tag in slide index ${index}:`, tag);
-                        }
-                    });
-                } else {
-                    console.warn(`Slide index ${index} has missing or invalid tags array.`);
-                }
-            });
+              const allTags = new Set();
+              slides.forEach((slide, index) => {
+                  if (slide && slide.tags && Array.isArray(slide.tags)) {
+                      slide.tags.forEach(tag => {
+                          if (typeof tag === 'string' && tag.trim() !== '') {
+                              allTags.add(tag.trim());
+                          } else {
+                              console.warn(`Found invalid tag in slide index ${index}:`, tag);
+                          }
+                      });
+                  } else {
+                       console.warn(`Slide index ${index} has missing or invalid tags array.`);
+                  }
+              });
 
-            // Sort tags alphabetically
-            const sortedTags = Array.from(allTags).sort((a, b) => a.localeCompare(b));
+              // Sort tags alphabetically
+              const sortedTags = Array.from(allTags).sort((a, b) => a.localeCompare(b));
 
-            // Write the sorted tags to the JSON file
-            fs.writeFileSync(outputFilePath, JSON.stringify(sortedTags, null, 2)); // Pretty print JSON
-            console.log(`Successfully extracted and saved ${sortedTags.length} unique tags to ${outputFilePath}`);
+              // Write the sorted tags to the JSON file
+              fs.writeFileSync(outputFilePath, JSON.stringify(sortedTags, null, 2)); // Pretty print JSON
+              console.log(`Successfully extracted and saved ${sortedTags.length} unique tags to ${outputFilePath}`);
 
           } catch (error) {
               console.error('Error during tag extraction process:', error);
