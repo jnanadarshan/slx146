@@ -1,58 +1,59 @@
 name: Extract Slide Tags
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push events but only for the main branch
-  # and only if slxv3.html has changed
   push:
     branches:
-      - main # Adjust if your default branch is different (e.g., master)
+      - main
     paths:
-      - 'slxv3.html' # Adjust the path if your file is not in the root
-
-  # Allows you to run this workflow manually from the Actions tab
+      - 'slxv3.html'
   workflow_dispatch:
 
 jobs:
   extract-tags:
     runs-on: ubuntu-latest
-    # Grant permissions to write back to the repository
     permissions:
       contents: write
 
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Sets up Node.js environment
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Use a recent LTS version
+          node-version: '20'
 
-      # Creates and runs the Node.js script to extract tags
+      - name: Check if HTML file exists
+        id: check_file
+        run: |
+          if [ ! -f "slxv3.html" ]; then
+            echo "::error::slxv3.html file not found in repository!"
+            exit 1
+          fi
+
       - name: Extract tags from HTML
         id: extract
         run: |
-          # Use cat with EOF to create the script file easily
           cat << 'EOF' > extract-tags.js
           const fs = require('fs');
           const path = require('path');
 
-          // --- Configuration ---
-          const htmlFilePath = path.join(__dirname, 'slxv3.html'); // Path to your HTML file relative to repo root
-          const outputFilePath = path.join(__dirname, 'alltags.json'); // Output JSON file path
-          // --- End Configuration ---
+          // Configuration
+          const htmlFilePath = path.join(__dirname, 'slxv3.html');
+          const outputFilePath = path.join(__dirname, 'alltags.json');
 
           console.log(`Reading HTML file: ${htmlFilePath}`);
           console.log(`Output JSON file: ${outputFilePath}`);
 
           try {
+              // Check if HTML file exists
+              if (!fs.existsSync(htmlFilePath)) {
+                  throw new Error(`HTML file not found at: ${htmlFilePath}`);
+              }
+              
               const htmlContent = fs.readFileSync(htmlFilePath, 'utf8');
 
               // Regex to find the 'const slideData = [...]' block
-              // It captures the array content (including brackets)
               const slideDataRegex = /const\s+slideData\s*=\s*(\[[\s\S]*?\]);/m;
               const match = htmlContent.match(slideDataRegex);
 
@@ -63,34 +64,39 @@ jobs:
               let slideDataString = match[1];
               console.log('Successfully extracted slideData string.');
 
-              // --- Attempt to parse the extracted string as JSON ---
-              // This assumes the content within the brackets is valid JSON.
-              // For more complex JS, a proper parser might be needed, but this works for the provided structure.
+              // Parse the extracted string
               let slides = [];
               try {
-                 // Using Function constructor for safer evaluation than direct eval
                  const parseFunction = new Function(`return ${slideDataString};`);
                  slides = parseFunction();
                  console.log(`Successfully parsed ${slides.length} slide objects.`);
               } catch (parseError) {
                  console.error('Error parsing slideData string:', parseError);
-                 console.error('Extracted string:', slideDataString); // Log the string for debugging
-                 throw new Error(`Failed to parse the extracted slideData array. Is it valid JSON/JS? Error: ${parseError.message}`);
+                 throw new Error(`Failed to parse the extracted slideData array: ${parseError.message}`);
               }
 
-
+              // Extract unique tags
               const allTags = new Set();
+              let invalidTagsCount = 0;
+              let slidesWithoutTags = 0;
+              
               slides.forEach((slide, index) => {
                   if (slide && slide.tags && Array.isArray(slide.tags)) {
+                      if (slide.tags.length === 0) {
+                          slidesWithoutTags++;
+                      }
+                      
                       slide.tags.forEach(tag => {
                           if (typeof tag === 'string' && tag.trim() !== '') {
                               allTags.add(tag.trim());
-                          } else {
+                          } else if (tag !== undefined) {
+                              invalidTagsCount++;
                               console.warn(`Found invalid tag in slide index ${index}:`, tag);
                           }
                       });
                   } else {
-                       console.warn(`Slide index ${index} has missing or invalid tags array.`);
+                      slidesWithoutTags++;
+                      console.warn(`Slide index ${index} has missing or invalid tags array.`);
                   }
               });
 
@@ -98,29 +104,59 @@ jobs:
               const sortedTags = Array.from(allTags).sort((a, b) => a.localeCompare(b));
 
               // Write the sorted tags to the JSON file
-              fs.writeFileSync(outputFilePath, JSON.stringify(sortedTags, null, 2)); // Pretty print JSON
+              fs.writeFileSync(outputFilePath, JSON.stringify(sortedTags, null, 2));
+              
+              // Write summary info for GitHub Actions
+              const summary = {
+                totalSlides: slides.length,
+                totalUniqueTags: sortedTags.length,
+                slidesWithoutTags,
+                invalidTagsCount
+              };
+              fs.writeFileSync('tag-extraction-summary.json', JSON.stringify(summary, null, 2));
+              
               console.log(`Successfully extracted and saved ${sortedTags.length} unique tags to ${outputFilePath}`);
+              console.log(`Slides: ${slides.length}, Unique tags: ${sortedTags.length}, Slides without tags: ${slidesWithoutTags}, Invalid tags: ${invalidTagsCount}`);
 
           } catch (error) {
               console.error('Error during tag extraction process:', error);
-              process.exit(1); // Signal failure to the workflow
+              process.exit(1);
           }
           EOF
 
           # Execute the script
           node extract-tags.js
 
-      # Commit and push the generated alltags.json if it changed
+      - name: Generate summary
+        id: summary
+        if: success()
+        run: |
+          if [ -f "tag-extraction-summary.json" ]; then
+            echo "## Tag Extraction Summary" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Extraction completed successfully" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            cat tag-extraction-summary.json >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: Commit and push alltags.json
         run: |
+          # Only proceed if the file exists
+          if [ ! -f "alltags.json" ]; then
+            echo "::warning::alltags.json was not generated"
+            exit 0
+          fi
+          
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add alltags.json
+          
           # Check if there are changes staged for commit
           git diff --staged --quiet
           if [ $? -ne 0 ]; then
             echo "Changes detected in alltags.json. Committing..."
-            git commit -m "Update alltags.json [skip ci]"
+            # The [skip actions] flag prevents this commit from triggering another workflow run
+            git commit -m "Update alltags.json [skip actions]"
             echo "Pushing changes..."
             git push
           else
