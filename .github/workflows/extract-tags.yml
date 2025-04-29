@@ -23,12 +23,24 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Debug repository content
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          
       - name: Check if HTML file exists
         id: check_file
         run: |
-          if [ ! -f "slxv3.html" ]; then
+          # The checkout action should place us in the repository root
+          # Use find command to locate the file anywhere in the repository
+          FOUND_FILE=$(find $GITHUB_WORKSPACE -name "slxv3.html" -type f)
+          
+          if [ -z "$FOUND_FILE" ]; then
             echo "::error::slxv3.html file not found in repository!"
             exit 1
+          else
+            echo "Found HTML file at: $FOUND_FILE"
           fi
 
       - name: Extract tags from HTML
