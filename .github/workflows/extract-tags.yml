@@ -100,7 +100,7 @@ jobs:
               // Write the sorted tags to the JSON file
               fs.writeFileSync(outputFilePath, JSON.stringify(sortedTags, null, 2)); // Pretty print JSON
               console.log(`Successfully extracted and saved ${sortedTags.length} unique tags to ${outputFilePath}`);
-              console.log(allTags.json);
+              console.log(sortedTags);
 
           } catch (error) {
               console.error('Error during tag extraction process:', error);
