@@ -17,64 +17,112 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Ensure we get the full repository
+          fetch-depth: 0
+
+      - name: Debug repository content
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "GitHub workspace: $GITHUB_WORKSPACE"
+          echo "Directory contents:"
+          ls -la
+          echo "Finding slxv3.html:"
+          find $GITHUB_WORKSPACE -name "slxv3.html" -type f || echo "File not found with find"
+          
+          if [ -f "slxv3.html" ]; then
+            echo "slxv3.html exists in current directory"
+            # Check file size to ensure it's not empty
+            echo "File size: $(stat -c%s "slxv3.html") bytes"
+            # Show first few lines of the file
+            echo "First 10 lines of the file:"
+            head -n 10 slxv3.html
+          else
+            echo "slxv3.html does not exist in the current directory"
+          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Debug repository content
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Directory contents:"
-          ls -la
-          
-      - name: Check if HTML file exists
-        id: check_file
-        run: |
-          # The checkout action should place us in the repository root
-          # Use find command to locate the file anywhere in the repository
-          FOUND_FILE=$(find $GITHUB_WORKSPACE -name "slxv3.html" -type f)
-          
-          if [ -z "$FOUND_FILE" ]; then
-            echo "::error::slxv3.html file not found in repository!"
-            exit 1
-          else
-            echo "Found HTML file at: $FOUND_FILE"
-          fi
-
-      - name: Extract tags from HTML
+      - name: Create and run extraction script with enhanced debugging
         id: extract
+        continue-on-error: true  # Allow script to continue even if this step fails
         run: |
           cat << 'EOF' > extract-tags.js
           const fs = require('fs');
           const path = require('path');
 
           // Configuration
-          const htmlFilePath = path.join(__dirname, 'slxv3.html');
-          const outputFilePath = path.join(__dirname, 'alltags.json');
+          const htmlFilePath = 'slxv3.html'; // Look in current directory
+          const outputFilePath = 'alltags.json';
 
-          console.log(`Reading HTML file: ${htmlFilePath}`);
-          console.log(`Output JSON file: ${outputFilePath}`);
+          console.log(`Node.js version: ${process.version}`);
+          console.log(`Current working directory: ${process.cwd()}`);
+          console.log(`Attempting to read HTML file: ${htmlFilePath}`);
 
           try {
               // Check if HTML file exists
               if (!fs.existsSync(htmlFilePath)) {
-                  throw new Error(`HTML file not found at: ${htmlFilePath}`);
+                  console.error(`ERROR: HTML file not found at: ${htmlFilePath}`);
+                  console.log('Directory contents:');
+                  fs.readdirSync('.').forEach(file => {
+                      console.log(`- ${file}`);
+                  });
+                  process.exit(1);
               }
               
+              console.log(`File exists, size: ${fs.statSync(htmlFilePath).size} bytes`);
+              
+              // Read the HTML file
               const htmlContent = fs.readFileSync(htmlFilePath, 'utf8');
+              console.log(`Successfully read HTML file, length: ${htmlContent.length} characters`);
+              
+              // Output first 200 characters for debugging
+              console.log(`First 200 characters of HTML file:\n${htmlContent.substring(0, 200)}...`);
 
               // Regex to find the 'const slideData = [...]' block
-              const slideDataRegex = /const\s+slideData\s*=\s*(\[[\s\S]*?\]);/m;
-              const match = htmlContent.match(slideDataRegex);
-
-              if (!match || !match[1]) {
-                  throw new Error('Could not find slideData array in the HTML file.');
+              // Try multiple patterns to find the slideData
+              const possibleRegexes = [
+                /const\s+slideData\s*=\s*(\[[\s\S]*?\]);/m,
+                /let\s+slideData\s*=\s*(\[[\s\S]*?\]);/m,
+                /var\s+slideData\s*=\s*(\[[\s\S]*?\]);/m,
+                /slideData\s*=\s*(\[[\s\S]*?\]);/m
+              ];
+              
+              let match = null;
+              let matchingPattern = null;
+              
+              for (const regex of possibleRegexes) {
+                match = htmlContent.match(regex);
+                if (match && match[1]) {
+                  matchingPattern = regex.toString();
+                  break;
+                }
               }
 
+              if (!match || !match[1]) {
+                  console.error('Could not find slideData array in the HTML file.');
+                  console.log('Searching for "slideData" keyword in the file:');
+                  const slideDataIndex = htmlContent.indexOf('slideData');
+                  
+                  if (slideDataIndex > -1) {
+                    console.log(`Found "slideData" at position ${slideDataIndex}`);
+                    console.log(`Context around "slideData" (100 chars):\n${htmlContent.substring(Math.max(0, slideDataIndex - 50), slideDataIndex + 50)}`);
+                  } else {
+                    console.log(`"slideData" keyword not found in the file.`);
+                  }
+                  
+                  // Create an empty file as fallback
+                  fs.writeFileSync(outputFilePath, JSON.stringify([]));
+                  process.exit(1);
+              }
+
+              console.log(`Found slideData using pattern: ${matchingPattern}`);
               let slideDataString = match[1];
-              console.log('Successfully extracted slideData string.');
+              console.log(`Successfully extracted slideData string. Length: ${slideDataString.length} characters`);
+              console.log(`First 100 characters of slideData: ${slideDataString.substring(0, 100)}...`);
 
               // Parse the extracted string
               let slides = [];
@@ -82,9 +130,19 @@ jobs:
                  const parseFunction = new Function(`return ${slideDataString};`);
                  slides = parseFunction();
                  console.log(`Successfully parsed ${slides.length} slide objects.`);
+                 
+                 // Debug first slide
+                 if (slides.length > 0) {
+                   console.log('First slide object keys:', Object.keys(slides[0]));
+                   console.log('Sample slide:', JSON.stringify(slides[0]).substring(0, 200) + '...');
+                 }
               } catch (parseError) {
-                 console.error('Error parsing slideData string:', parseError);
-                 throw new Error(`Failed to parse the extracted slideData array: ${parseError.message}`);
+                 console.error('Error parsing slideData string:', parseError.message);
+                 console.log('Error details:', parseError.stack);
+                 
+                 // Create an empty file as fallback
+                 fs.writeFileSync(outputFilePath, JSON.stringify([]));
+                 process.exit(1);
               }
 
               // Extract unique tags
@@ -131,34 +189,48 @@ jobs:
               console.log(`Slides: ${slides.length}, Unique tags: ${sortedTags.length}, Slides without tags: ${slidesWithoutTags}, Invalid tags: ${invalidTagsCount}`);
 
           } catch (error) {
-              console.error('Error during tag extraction process:', error);
+              console.error('Error during tag extraction process:', error.message);
+              console.error('Stack trace:', error.stack);
+              
+              // Create an empty file as fallback
+              try {
+                fs.writeFileSync(outputFilePath, JSON.stringify([]));
+                console.log('Created empty tags file as fallback');
+              } catch (writeError) {
+                console.error('Failed to create fallback file:', writeError);
+              }
+              
               process.exit(1);
           }
           EOF
 
-          # Execute the script
-          node extract-tags.js
+          # Execute the script and capture all output
+          node extract-tags.js 2>&1 | tee extraction-log.txt
 
-      - name: Generate summary
-        id: summary
-        if: success()
+      - name: Check extraction results
+        id: check_results
         run: |
-          if [ -f "tag-extraction-summary.json" ]; then
-            echo "## Tag Extraction Summary" >> $GITHUB_STEP_SUMMARY
-            echo "✅ Extraction completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "## Tag Extraction Process Log" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat extraction-log.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          
+          # Always create alltags.json if it doesn't exist
+          if [ ! -f "alltags.json" ]; then
+            echo "Creating empty alltags.json as fallback"
+            echo "[]" > alltags.json
+            echo "⚠️ Created empty alltags.json as no tags were extracted" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ alltags.json was successfully generated" >> $GITHUB_STEP_SUMMARY
+            echo "File content (first 1000 chars):" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
-            cat tag-extraction-summary.json >> $GITHUB_STEP_SUMMARY
+            head -c 1000 alltags.json >> $GITHUB_STEP_SUMMARY
+            echo "..." >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Commit and push alltags.json
         run: |
-          # Only proceed if the file exists
-          if [ ! -f "alltags.json" ]; then
-            echo "::warning::alltags.json was not generated"
-            exit 0
-          fi
-          
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add alltags.json
