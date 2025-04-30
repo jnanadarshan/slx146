@@ -365,7 +365,7 @@
       let availableTags = [];
       
       // Load tags from JSON file
-      fetch('alltags.json')
+      fetch('../alltags.json')
         .then(response => response.json())
         .then(data => {
           availableTags = data;
