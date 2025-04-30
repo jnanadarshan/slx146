@@ -458,44 +458,6 @@
     .modal-close {
         /* No changes needed unless you want to adjust its position */
     }
-
-    /* Add these new styles for autocomplete */
-    .autocomplete-container {
-      position: relative;
-    }
-
-    .autocomplete-list {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: var(--card-color);
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      margin-top: 4px;
-      max-height: 200px;
-      overflow-y: auto;
-      box-shadow: 0 2px 4px var(--shadow-color);
-      z-index: 1000;
-      display: none;
-    }
-
-    .autocomplete-item {
-      padding: 8px 16px;
-      cursor: pointer;
-      color: var(--text-color);
-    }
-
-    .autocomplete-item:hover,
-    .autocomplete-item.selected {
-      background: var(--hover-color);
-    }
-
-    /* Highlight matching text in suggestions */
-    .match-highlight {
-      color: var(--primary-color);
-      font-weight: 500;
-    }
     
   </style>
 </head>
@@ -523,10 +485,7 @@
         <div class="hamburger" id="hamburgerMenu">
             <span class="material-symbols-outlined">menu</span>
         </div>
-        <div class="autocomplete-container">
-          <input type="text" class="search-bar" id="searchBar" placeholder="Search slides by tags or title...">
-          <div class="autocomplete-list" id="autocompleteList"></div>
-        </div>
+        <input type="text" class="search-bar" id="searchBar" placeholder="Search slides by tags or title...">
       </div>
       <span class="search-clear" id="searchClear">ESC to clear</span>
       
@@ -3447,11 +3406,6 @@
         });
       });
 
-      // Add these lines at the end of initGallery
-      fetchTags().then(() => {
-        setupAutocomplete();
-      });
-
     }
 
     // Copy Image to Clipboard
@@ -3554,111 +3508,6 @@
 
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', initGallery);
-
-    // Add this near the top of your script section
-    let allTags = [];
-
-    // Function to fetch tags from JSON file
-    async function fetchTags() {
-      try {
-        const response = await fetch('alltags.json');
-        allTags = await response.json();
-      } catch (error) {
-        console.error('Error loading tags:', error);
-      }
-    }
-
-    // Function to handle autocomplete
-    function setupAutocomplete() {
-      const searchBar = document.getElementById('searchBar');
-      const autocompleteList = document.getElementById('autocompleteList');
-      let selectedIndex = -1;
-
-      function showAutocomplete(suggestions) {
-        if (!suggestions.length) {
-          autocompleteList.style.display = 'none';
-          return;
-        }
-
-        const searchQuery = searchBar.value.toLowerCase();
-        autocompleteList.innerHTML = suggestions
-          .map((tag, index) => {
-            // Highlight the matching part of the text
-            const highlightedText = tag.replace(
-              new RegExp(searchQuery, 'gi'),
-              match => `<span class="match-highlight">${match}</span>`
-            );
-            return `<div class="autocomplete-item" data-index="${index}">${highlightedText}</div>`;
-          })
-          .join('');
-
-        autocompleteList.style.display = 'block';
-      }
-
-      function getSuggestions(query) {
-        if (!query) return [];
-        query = query.toLowerCase();
-        return allTags.filter(tag => 
-          tag.toLowerCase().includes(query)
-        ).slice(0, 10); // Limit to 10 suggestions
-      }
-
-      searchBar.addEventListener('input', () => {
-        const query = searchBar.value;
-        const suggestions = getSuggestions(query);
-        showAutocomplete(suggestions);
-        selectedIndex = -1;
-      });
-
-      searchBar.addEventListener('keydown', (e) => {
-        const items = autocompleteList.getElementsByClassName('autocomplete-item');
-        
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
-          updateSelection();
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          selectedIndex = Math.max(selectedIndex - 1, -1);
-          updateSelection();
-        } else if (e.key === 'Enter' && selectedIndex >= 0) {
-          e.preventDefault();
-          if (items[selectedIndex]) {
-            searchBar.value = items[selectedIndex].textContent;
-            autocompleteList.style.display = 'none';
-            filterSlides();
-          }
-        }
-      });
-
-      function updateSelection() {
-        const items = autocompleteList.getElementsByClassName('autocomplete-item');
-        for (let i = 0; i < items.length; i++) {
-          items[i].classList.toggle('selected', i === selectedIndex);
-        }
-        if (selectedIndex >= 0) {
-          items[selectedIndex].scrollIntoView({ block: 'nearest' });
-        }
-      }
-
-      // Handle clicks on suggestions
-      autocompleteList.addEventListener('click', (e) => {
-        const item = e.target.closest('.autocomplete-item');
-        if (item) {
-          searchBar.value = item.textContent;
-          autocompleteList.style.display = 'none';
-          filterSlides();
-        }
-      });
-
-      // Close autocomplete when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.autocomplete-container')) {
-          autocompleteList.style.display = 'none';
-        }
-      });
-    }
-
   </script>
 </body>
 </html>
