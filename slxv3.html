@@ -496,6 +496,44 @@
       color: var(--primary-color);
       font-weight: 500;
     }
+
+    /* Theme toggle button styles */
+    .theme-toggle {
+        position: fixed;
+        right: 20px;
+        top: 20px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 2px 5px var(--shadow-color);
+        transition: all 0.3s;
+        z-index: 96;
+    }
+
+    .theme-toggle:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px var(--shadow-color);
+    }
+
+    .theme-toggle .material-symbols-outlined {
+        font-size: 20px;
+    }
+
+    /* Add media query to adjust position on mobile */
+    @media screen and (max-width: 768px) {
+        .theme-toggle {
+            top: auto;
+            bottom: 20px;
+            right: 70px; /* Position to the left of scroll-up button */
+        }
+    }
     
   </style>
 </head>
@@ -538,6 +576,11 @@
     <div class="gallery" id="slideGallery">
       <!-- Slides will be generated here -->
     </div>
+    
+    <button class="theme-toggle" id="themeToggle" title="Toggle Dark Mode">
+        <span class="material-symbols-outlined">dark_mode</span>
+    </button>
+    
   </div>
   
   <div id="imageModal" class="modal">
@@ -3658,6 +3701,44 @@
         }
       });
     }
+
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('.material-symbols-outlined');
+
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        // Update theme
+        setTheme(newTheme);
+        
+        // Update icon
+        themeIcon.textContent = newTheme === 'dark' ? 'light_mode' : 'dark_mode';
+    });
+
+    // Set initial icon based on current theme
+    function updateThemeIcon() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        themeIcon.textContent = currentTheme === 'dark' ? 'light_mode' : 'dark_mode';
+    }
+
+    // Update icon when theme changes
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'data-theme') {
+                updateThemeIcon();
+            }
+        });
+    });
+
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+    });
+
+    // Set initial icon
+    updateThemeIcon();
 
   </script>
 </body>
