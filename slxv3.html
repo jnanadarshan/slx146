@@ -458,6 +458,45 @@
     .modal-close {
         /* No changes needed unless you want to adjust its position */
     }
+
+    /* Autocomplete Search */
+
+    /* Add these styles for suggestions */
+    .suggestions-list {
+      position: absolute;
+      top: calc(100% - 1rem); /* Position below the search container */
+      left: 60px; /* Align with search bar start (adjust if hamburger width changes) */
+      right: 1.5rem; /* Align with search bar end */
+      background: var(--card-color);
+      border: 1px solid var(--border-color);
+      border-top: none; /* Avoid double border */
+      border-radius: 0 0 4px 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 10;
+      box-shadow: 0 4px 8px var(--shadow-color);
+      display: none; /* Hidden by default */
+    }
+    
+    .suggestion-item {
+      padding: 0.6rem 1rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-color);
+    }
+    
+    .suggestion-item:hover {
+      background-color: var(--hover-color);
+    }
+    
+    .suggestion-item.highlighted { /* Optional: for keyboard navigation */
+       background-color: var(--hover-color);
+    }
+    /* Adjust left position if sidebar is open (optional) */
+    .container.sidebar-open .suggestions-list {
+        /* Adjust if needed, might be fine as is */
+    }
+    
     
   </style>
 </head>
@@ -487,8 +526,10 @@
         </div>
         <input type="text" class="search-bar" id="searchBar" placeholder="Search slides by tags or title...">
       </div>
-      <span class="search-clear" id="searchClear">ESC to clear</span>
       
+      <span class="search-clear" id="searchClear">ESC to clear</span>
+      <div id="searchSuggestions" class="suggestions-list"></div>
+      <span class="search-clear" id="searchClear">ESC to clear</span>
       <div class="tag-filters" id="popularTags">
         <!-- Popular tags will be generated here -->
       </div>
@@ -3073,7 +3114,54 @@
 
 ];
 
-    // Function to shuffle array (for random display)
+    // --- Constants for Autocomplete ---
+    let allAvailableTags = []; // To store tags from alltags.json
+    const searchBar = document.getElementById('searchBar');
+    const suggestionsContainer = document.getElementById('searchSuggestions');
+    const searchClearBtn = document.getElementById('searchClear');
+
+    // Function to display suggestions
+    function showSuggestions(filteredTags) {
+      suggestionsContainer.innerHTML = ''; // Clear previous suggestions
+      if (filteredTags.length === 0 || searchBar.value.trim() === '') {
+        suggestionsContainer.style.display = 'none';
+        return;
+      }
+
+      filteredTags.slice(0, 10).forEach(tag => { // Limit suggestions shown
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.textContent = tag;
+        div.addEventListener('click', () => {
+          searchBar.value = tag; // Set search bar value to the clicked tag
+          suggestionsContainer.style.display = 'none'; // Hide suggestions
+          filterSlides(); // Trigger filtering
+        });
+        suggestionsContainer.appendChild(div);
+      });
+
+      suggestionsContainer.style.display = 'block'; // Show suggestions
+    }
+
+    // Function to handle search input and filtering suggestions
+    function handleSearchInput() {
+      const query = searchBar.value.toLowerCase().trim();
+      if (query === '') {
+        showSuggestions([]); // Hide if query is empty
+        filterSlides(); // Show all slides matching the active tag (if any)
+        return;
+      }
+
+      // Filter available tags based on the query
+      const filteredTags = allAvailableTags.filter(tag =>
+        tag.toLowerCase().includes(query)
+      );
+
+      showSuggestions(filteredTags);
+      filterSlides(); // Also filter slides as the user types
+    }
+
+        // Function to shuffle array (for random display)
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -3253,21 +3341,29 @@
     }
 
     // Function to clear all filters
-    function clearFilters() {
-      // Clear search box
-      document.getElementById('searchBar').value = '';
-      
-      // Reset active tag to "All"
-      document.querySelectorAll('.tag-button').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      document.querySelector('.tag-button[data-tag="all"]').classList.add('active');
-      
-      // Hide "ESC to clear" text
-      document.getElementById('searchClear').classList.remove('visible');
-      
-      // Rerender all slides
-      renderSlides(slideData);
+      function clearFilters() {
+    // Clear search box
+    searchBar.value = '';
+
+    // Reset active tag to "All"
+    document.querySelectorAll('.tag-button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    // Ensure the "All" button exists before trying to add class
+    const allButton = document.querySelector('.tag-button[data-tag="all"]');
+    if (allButton) {
+        allButton.classList.add('active');
+    }
+
+
+    // Hide "ESC to clear" text
+    searchClearBtn.classList.remove('visible');
+
+    // Hide suggestions
+    suggestionsContainer.style.display = 'none';
+
+    // Rerender all slides
+    renderSlides(slideData);
     }
 
     // Function to filter by tag from button click
@@ -3337,50 +3433,63 @@
       img.src = src;
     }
     
-    // Initialize the gallery and sidebar functionality
-    function initGallery() {
+    // --- Modify initGallery Function ---
+    async function initGallery() { // Make it async
+      await fetchAllTags(); // Fetch tags first
       renderPopularTags();
       renderAlphabeticalTags();
       renderSlides(slideData);
       initTheme(); // Initialize theme system
-      
-      // Add event listener for search
-      document.getElementById('searchBar').addEventListener('input', filterSlides);
-      
+
+      // Add event listener for search input (use 'input' for real-time)
+      searchBar.addEventListener('input', handleSearchInput);
+
       // Clear filters with search clear button
-      document.getElementById('searchClear').addEventListener('click', clearFilters);
-      
+      searchClearBtn.addEventListener('click', () => {
+          clearFilters();
+          showSuggestions([]); // Hide suggestions on clear
+      });
+
+      // Hide suggestions when clicking outside
+      document.addEventListener('click', (event) => {
+        if (!searchBar.contains(event.target) && !suggestionsContainer.contains(event.target)) {
+          suggestionsContainer.style.display = 'none';
+        }
+      });
+
+      // Handle Escape key for suggestions as well
       document.addEventListener('keydown', function(event) {
         if (event.key === "Escape") {
           const sidebar = document.getElementById('sidebar');
           const modal = document.getElementById('imageModal');
-          const searchBar = document.getElementById('searchBar');
           const activeTagButton = document.querySelector('.tag-button.active');
 
           if (modal.style.display === "block") {
-            // 1. Close modal if open
             modal.style.display = "none";
+          } else if (suggestionsContainer.style.display === 'block') {
+            // 1. Close suggestions first if open
+            suggestionsContainer.style.display = 'none';
           } else if (sidebar.classList.contains('open')) {
-            // 2. Close sidebar if open (and modal is not open)
+            // 2. Close sidebar if open (and suggestions/modal are closed)
             toggleSidebar();
           } else if (searchBar.value !== '' || (activeTagButton && activeTagButton.dataset.tag !== 'all')) {
-            // 3. Clear filters if sidebar and modal are closed
+            // 3. Clear filters if sidebar/modal/suggestions are closed
             clearFilters();
           }
         }
       });
-      
+
       // Sidebar toggle functionality
       document.getElementById('hamburgerMenu').addEventListener('click', toggleSidebar);
       document.getElementById('closeSidebar').addEventListener('click', toggleSidebar);
       document.getElementById('overlay').addEventListener('click', toggleSidebar);
-      
+
       // Modal close functionality
       const modal = document.getElementById('imageModal');
       document.getElementById('closeModal').addEventListener('click', function() {
         modal.style.display = "none";
       });
-      
+
       // Close modal when clicking outside the image
       modal.addEventListener('click', function(event) {
         if (event.target === modal) {
@@ -3390,7 +3499,7 @@
 
       // Scroll up button functionality
       const scrollUp = document.getElementById('scrollUp');
-      
+
       window.addEventListener('scroll', () => {
         if (window.pageYOffset > 300) {
           scrollUp.classList.add('visible');
@@ -3398,7 +3507,7 @@
           scrollUp.classList.remove('visible');
         }
       });
-      
+
       scrollUp.addEventListener('click', () => {
         window.scrollTo({
           top: 0,
@@ -3406,12 +3515,9 @@
         });
       });
 
-    }
-
-    // Copy Image to Clipboard
-
-    const copyImageBtn = document.getElementById('copyImageBtn');
-    const modalImage = document.getElementById('modalImage');
+      // Copy Image functionality (keep existing code)
+      const copyImageBtn = document.getElementById('copyImageBtn');
+      const modalImage = document.getElementById('modalImage');
 
     copyImageBtn.addEventListener('click', async (event) => {
         event.stopPropagation(); // Prevent modal from closing if clicking the button
