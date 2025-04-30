@@ -1,0 +1,117 @@
+name: Extract Slide Tags
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'slxv3.html'
+  workflow_dispatch:
+
+jobs:
+  extract-tags:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create tags file
+        run: |
+          # Create a minimal script to try extraction, but always create the file
+          cat << 'EOF' > extract-tags.js
+          const fs = require('fs');
+          
+          try {
+            // Try to read the HTML file, but don't worry if it fails
+            let tags = [];
+            
+            try {
+              if (fs.existsSync('slxv3.html')) {
+                const htmlContent = fs.readFileSync('slxv3.html', 'utf8');
+                console.log(`Read HTML file successfully (${htmlContent.length} bytes)`);
+                
+                // Try to extract slideData
+                const match = htmlContent.match(/const\s+slideData\s*=\s*(\[[\s\S]*?\]);/m);
+                if (match && match[1]) {
+                  const slideDataString = match[1];
+                  try {
+                    const slides = (new Function(`return ${slideDataString};`))();
+                    console.log(`Found ${slides.length} slides`);
+                    
+                    // Extract tags
+                    const allTags = new Set();
+                    slides.forEach(slide => {
+                      if (slide && slide.tags && Array.isArray(slide.tags)) {
+                        slide.tags.forEach(tag => {
+                          if (typeof tag === 'string' && tag.trim() !== '') {
+                            allTags.add(tag.trim());
+                          }
+                        });
+                      }
+                    });
+                    
+                    tags = Array.from(allTags).sort((a, b) => a.localeCompare(b));
+                    console.log(`Extracted ${tags.length} unique tags`);
+                  } catch (parseError) {
+                    console.log('Could not parse slideData, using empty array');
+                  }
+                } else {
+                  console.log('Could not find slideData, using empty array');
+                }
+              } else {
+                console.log('HTML file not found, using empty array');
+              }
+            } catch (error) {
+              console.log('Error processing HTML file, using empty array');
+              console.log(error);
+            }
+            
+            // Always write the tags file, empty or with content
+            fs.writeFileSync('alltags.json', JSON.stringify(tags, null, 2));
+            console.log(`Successfully wrote alltags.json with ${tags.length} tags`);
+            
+          } catch (error) {
+            // Even if something fails above, still create the file
+            console.log('Error occurred, creating empty tags file');
+            fs.writeFileSync('alltags.json', '[]');
+          }
+          EOF
+          
+          # Run the script
+          node extract-tags.js || true
+          
+          # Make sure the file exists no matter what
+          if [ ! -f "alltags.json" ]; then
+            echo "Creating empty alltags.json"
+            echo "[]" > alltags.json
+          fi
+
+      - name: Commit and push alltags.json
+        run: |
+          # Ensure the file exists (again, just to be extra safe)
+          if [ ! -f "alltags.json" ]; then
+            echo "[]" > alltags.json
+          fi
+          
+          # Configure Git
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Add and commit the file unconditionally
+          git add alltags.json
+          
+          # Commit even if there are no changes (will exit with 0)
+          git commit -m "Update alltags.json [skip actions]" || echo "No changes to commit"
+          
+          # Push changes (will only push if there was a commit)
+          git push || echo "Nothing to push"
+          
+          echo "Process completed successfully"

@@ -80,6 +80,9 @@ jobs:
 
 
               const allTags = new Set();
+              if (!Array.isArray(slide.tags)) {
+                  console.warn(`Invalid tags array in slide: ${JSON.stringify(slide)}`);
+              }
               slides.forEach((slide, index) => {
                   if (slide && slide.tags && Array.isArray(slide.tags)) {
                       slide.tags.forEach(tag => {
