@@ -34,8 +34,8 @@ jobs:
             let tags = [];
             
             try {
-              if (fs.existsSync('slxv3.html')) {
-                const htmlContent = fs.readFileSync('slxv3.html', 'utf8');
+              if (fs.existsSync('index.html')) {
+                const htmlContent = fs.readFileSync('index.html', 'utf8');
                 console.log(`Read HTML file successfully (${htmlContent.length} bytes)`);
                 
                 // Try to extract slideData
