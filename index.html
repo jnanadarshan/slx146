@@ -416,14 +416,96 @@
       transition: all 0.3s;
       z-index: 97;
     }
+    .scroll-up.visible {
+      display: flex;
+    }
+    /* Add these new styles for help button and popup */
+    .help-button {
+      position: fixed;
+      right: 20px;
+      bottom: 70px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 2px 5px var(--shadow-color);
+      transition: all 0.3s;
+      z-index: 97;
+    }
 
-    .scroll-up:hover {
+    .help-button:hover, .scroll-up:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 8px var(--shadow-color);
     }
 
-    .scroll-up.visible {
+    .help-modal {
+      display: none;
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--card-color);
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px var(--shadow-color);
+      z-index: 1000;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    .help-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
+      z-index: 999;
+    }
+
+    .help-modal h3 {
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+    }
+
+    .help-section {
+      margin-bottom: 1rem;
+    }
+
+    .help-section h4 {
+      margin-bottom: 0.5rem;
+      color: var(--primary-color);
+    }
+
+    .help-section p {
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .help-modal .close-help {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      cursor: pointer;
+      color: var(--text-color);
+      width: 24px;
+      height: 24px;
       display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background-color 0.2s;
+    }
+
+    .help-modal .close-help:hover {
+      background: var(--hover-color);
     }
 
     /* Add these styles for the copy button */
@@ -581,6 +663,10 @@
         <span class="material-symbols-outlined">dark_mode</span>
     </button>
     
+    <button class="help-button" id="helpButton" title="Help">
+      <span class="material-symbols-outlined">help</span>
+    </button>
+    
   </div>
   
   <div id="imageModal" class="modal">
@@ -594,6 +680,41 @@
 
   <div class="scroll-up" id="scrollUp">
     <span class="material-symbols-outlined">arrow_upward</span>
+  </div>
+
+  <div class="help-overlay" id="helpOverlay"></div>
+  <div class="help-modal" id="helpModal">
+    <span class="close-help" id="closeHelp">
+      <span class="material-symbols-outlined">close</span>
+    </span>
+    <h3>Help Guide</h3>
+    
+    <div class="help-section">
+      <h4>Navigation</h4>
+      <p>• Click the menu icon (☰) to open the sidebar with all available tags</p>
+      <p>• Use the search bar to find slides by title or tags</p>
+      <p>• Press ESC to clear search and filters</p>
+    </div>
+
+    <div class="help-section">
+      <h4>Theme Settings</h4>
+      <p>• Click the sun/moon icon to toggle between light and dark mode</p>
+      <p>• Use the theme options in the sidebar for auto theme based on system settings</p>
+    </div>
+
+    <div class="help-section">
+      <h4>Image Interaction</h4>
+      <p>• Click any slide to view it in full size</p>
+      <p>• Use the copy button to copy images to clipboard</p>
+      <p>• Click outside the image or the X button to close</p>
+    </div>
+
+    <div class="help-section">
+      <h4>Tags</h4>
+      <p>• Click tags in the top bar for quick filtering</p>
+      <p>• Click tags on slides to filter by that specific tag</p>
+      <p>• Use the sidebar for a complete alphabetical list of tags</p>
+    </div>
   </div>
 
   <script>
@@ -3740,6 +3861,45 @@
     // Set initial icon
     updateThemeIcon();
 
+    // Add this to your existing script section
+    function initHelp() {
+      const helpButton = document.getElementById('helpButton');
+      const helpModal = document.getElementById('helpModal');
+      const helpOverlay = document.getElementById('helpOverlay');
+      const closeHelp = document.getElementById('closeHelp');
+
+      function showHelp() {
+        helpModal.style.display = 'block';
+        helpOverlay.style.display = 'block';
+      }
+
+      function hideHelp() {
+        helpModal.style.display = 'none';
+        helpOverlay.style.display = 'none';
+      }
+
+      helpButton.addEventListener('click', showHelp);
+      closeHelp.addEventListener('click', hideHelp);
+      helpOverlay.addEventListener('click', hideHelp);
+
+      // Add help modal to ESC key handler
+      const existingKeydownHandler = document.onkeydown;
+      document.onkeydown = function(event) {
+        if (event.key === "Escape" && helpModal.style.display === "block") {
+          hideHelp();
+          return;
+        }
+        if (existingKeydownHandler) {
+          existingKeydownHandler(event);
+        }
+      };
+    }
+
+    // Add this line to your existing initGallery function
+    document.addEventListener('DOMContentLoaded', function() {
+      initGallery();
+      initHelp();  // Initialize help functionality
+    });
   </script>
 </body>
 </html>
