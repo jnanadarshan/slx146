@@ -705,9 +705,25 @@
             
             switch (action) {
                 case 'copy':
-                    // In a real application, this would copy the image to clipboard
-                    // For this demo, we'll just show an alert
-                    alert(`Copied ${icon.name} to clipboard!`);
+                    const iconSpan = button.querySelector('.material-icons');
+                    
+                    // Attempt to copy the icon path (or name as fallback)
+                    navigator.clipboard.writeText(icon.path || icon.name).then(() => {
+                        // Change icon to checkmark on successful copy
+                        iconSpan.textContent = 'check';
+                        button.title = 'Copied!';
+                        
+                        // Revert icon after a delay
+                        setTimeout(() => {
+                            iconSpan.textContent = 'content_copy';
+                            button.title = 'Copy to clipboard';
+                        }, 1500); // Revert after 1.5 seconds
+                        
+                    }).catch(err => {
+                        console.error('Failed to copy: ', err);
+                        // Optionally provide feedback to the user about the failure
+                        alert(`Failed to copy ${icon.name}.`);
+                    });
                     break;
                 
                 case 'download':
