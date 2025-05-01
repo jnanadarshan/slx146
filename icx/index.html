@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icon Gallery</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3a86ff;
+            --secondary-color: #8338ec;
+            --text-color: #333;
+            --light-gray: #f2f2f2;
+            --medium-gray: #e0e0e0;
+            --dark-gray: #757575;
+            --white: #ffffff;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #4d9aff;
+            --secondary-color: #9355ec;
+            --text-color: #f2f2f2;
+            --light-gray: #2a2a2a;
+            --medium-gray: #3a3a3a;
+            --dark-gray: #b0b0b0;
+            --white: #1e1e1e;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            color: var(--text-color);
+            background-color: var(--light-gray);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            width: 250px;
+            position: fixed;
+            height: 100vh;
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            overflow-y: auto;
+            z-index: 100;
+            padding-top: 60px;
+        }
+
+        .sidebar.inactive {
+            width: 0;
+        }
+
+        .sidebar-content {
+            padding: 20px;
+            opacity: 1;
+            transition: opacity 0.2s ease;
+            width: 250px;
+        }
+
+        .sidebar.inactive .sidebar-content {
+            opacity: 0;
+        }
+
+        .tag-list {
+            list-style: none;
+        }
+
+        .tag-list li {
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .tag-list li:hover {
+            background-color: var(--light-gray);
+        }
+
+        .tag-name {
+            margin-left: 10px;
+        }
+
+        .tag-count {
+            margin-left: auto;
+            background-color: var(--medium-gray);
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            transition: var(--transition);
+            padding: 20px;
+            padding-top: 80px;
+        }
+
+        .main-content.sidebar-inactive {
+            margin-left: 0;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 250px;
+            right: 0;
+            height: 60px;
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 99;
+            transition: var(--transition);
+        }
+
+        .header.sidebar-inactive {
+            left: 0;
+        }
+
+        .menu-toggle {
+            cursor: pointer;
+            margin-right: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-container {
+            flex: 1;
+            margin: 0 20px;
+            position: relative;
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+        }
+        
+        .action-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--dark-gray);
+            background-color: var(--light-gray);
+        }
+        
+        .action-icon:hover {
+            background-color: var(--medium-gray);
+        }
+        
+        .favorites-btn.active {
+            color: #ff3d71;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 40px 10px 40px;
+            border: 1px solid var(--medium-gray);
+            border-radius: 20px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--dark-gray);
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--dark-gray);
+            cursor: pointer;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .search-input:valid ~ .clear-search {
+            opacity: 1;
+        }
+
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .icon-card {
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: var(--transition);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .icon-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .icon-preview {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .icon-preview img {
+            max-width: 80%;
+            max-height: 80%;
+            object-fit: contain;
+        }
+
+        .icon-type {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+
+        .icon-info {
+            padding: 10px;
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .icon-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .icon-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .icon-tag {
+            background-color: var(--light-gray);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .icon-tag:hover {
+            background-color: var(--medium-gray);
+        }
+
+        .icon-actions {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .icon-preview:hover .icon-actions {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 5px;
+            color: var(--dark-gray);
+            transition: var(--transition);
+        }
+
+        .action-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .favorite-active {
+            color: #ff3d71;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: var(--dark-gray);
+            grid-column: 1 / -1;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .icon-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 15px;
+            }
+
+            .header {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar {
+                width: 0;
+            }
+
+            .sidebar.active {
+                width: 100%;
+            }
+
+            .sidebar.inactive {
+                width: 0;
+            }
+
+            .sidebar-content {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-content">
+            <h3>Tags</h3>
+            <ul class="tag-list" id="tag-list">
+                <!-- Tags will be dynamically inserted here -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="header" id="header">
+        <div class="menu-toggle" id="menu-toggle">
+            <span class="material-icons">menu</span>
+        </div>
+        <div class="search-container">
+            <span class="material-icons search-icon">search</span>
+            <input type="text" class="search-input" id="search-input" placeholder="Search icons by name or tag..." required>
+            <span class="material-icons clear-search" id="clear-search">close</span>
+        </div>
+        <div class="header-actions">
+            <div class="action-icon favorites-btn" id="favorites-toggle" title="Show favorites only">
+                <span class="material-icons">favorite_border</span>
+            </div>
+            <div class="action-icon" id="theme-toggle" title="Toggle dark mode">
+                <span class="material-icons">dark_mode</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="main-content">
+        <div class="icon-grid" id="icon-grid">
+            <!-- Icons will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // Check for saved theme preference or default to light
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        // Apply saved theme
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+        
+        // Sample data (this would be loaded from a database in a real application)
+        const iconsData = [
+            {
+                id: 1,
+                name: "Shopping Cart",
+                tags: ["ecommerce", "shop", "cart"],
+                type: "SVG",
+                path: "/api/placeholder/100/100"
+            },
+            {
+                id: 2,
+                name: "User Profile",
+                tags: ["user", "profile", "account"],
+                type: "PNG",
+                path: "/api/placeholder/100/100"
+            },
+            {
+                id: 3,
+                name: "Settings Gear",
+                tags: ["settings", "options", "gear"],
+                type: "SVG",
+                path: "/api/placeholder/100/100"
+            },
+            {
+                id: 4,
+                name: "Download Arrow",
+                tags: ["download", "arrow", "save"],
+                type: "JPG",
+                path: "/api/placeholder/100/100"
+            },
+            {
+                id: 5,
+                name: "Heart",
+                tags: ["love", "like", "favorite"],
+                type: "SVG",
+                path: "/api/placeholder/100/100"
+            },
+            {
+                id: 6,
+                name: "Notification Bell",
+                tags: ["notification", "alert", "bell"],
+                type: "PNG",
+                path: "/api/placeholder/100/100"
+            },
+            {
+                id: 7,
+                name: "Cloud Upload",
+                tags: ["cloud", "upload", "storage"],
+                type: "SVG",
+                path: "/api/placeholder/100/100"
+            },
+            {
+                id: 8,
+                name: "Lock",
+                tags: ["security", "lock", "password"],
+                type: "PNG",
+                path: "/api/placeholder/100/100"
+            },
+            {
+                id: 9,
+                name: "Calendar",
+                tags: ["date", "calendar", "schedule"],
+                type: "SVG",
+                path: "/api/placeholder/100/100"
+            },
+            {
+                id: 10,
+                name: "Play Button",
+                tags: ["play", "video", "media"],
+                type: "JPG",
+                path: "/api/placeholder/100/100"
+            },
+            {
+                id: 11,
+                name: "Bookmark",
+                tags: ["bookmark", "save", "favorite"],
+                type: "SVG",
+                path: "/api/placeholder/100/100"
+            },
+            {
+                id: 12,
+                name: "Home",
+                tags: ["home", "house", "main"],
+                type: "PNG",
+                path: "/api/placeholder/100/100"
+            }
+        ];
+
+        // DOM elements
+        const sidebar = document.getElementById('sidebar');
+        const header = document.getElementById('header');
+        const mainContent = document.getElementById('main-content');
+        const menuToggle = document.getElementById('menu-toggle');
+        const searchInput = document.getElementById('search-input');
+        const clearSearch = document.getElementById('clear-search');
+        const iconGrid = document.getElementById('icon-grid');
+        const tagList = document.getElementById('tag-list');
+
+        // Favorites from cookies
+        let favorites = [];
+        
+        // Initialize the page
+        function init() {
+            loadFavorites();
+            renderIcons(iconsData);
+            renderTags();
+            setupEventListeners();
+            updateThemeToggleIcon();
+        }
+
+        // Load favorites from cookies
+        function loadFavorites() {
+            const favoritesFromCookie = getCookie('favorites');
+            if (favoritesFromCookie) {
+                favorites = JSON.parse(favoritesFromCookie);
+            }
+        }
+
+        // Save favorites to cookies
+        function saveFavorites() {
+            setCookie('favorites', JSON.stringify(favorites), 30);
+        }
+
+        // Get cookie by name
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        // Set cookie
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days*24*60*60*1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + value + expires + "; path=/";
+        }
+
+        // Toggle sidebar
+        function toggleSidebar() {
+            sidebar.classList.toggle('inactive');
+            header.classList.toggle('sidebar-inactive');
+            mainContent.classList.toggle('sidebar-inactive');
+        }
+
+        // Clear search
+        function clearSearchInput() {
+            searchInput.value = '';
+            renderIcons(iconsData);
+        }
+
+        // Filter icons by search term
+        function filterIcons(searchTerm) {
+            if (!searchTerm) {
+                return iconsData;
+            }
+            
+            searchTerm = searchTerm.toLowerCase();
+            return iconsData.filter(icon => {
+                return icon.name.toLowerCase().includes(searchTerm) || 
+                       icon.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+            });
+        }
+
+        // Filter icons by tag
+        function filterIconsByTag(tag) {
+            return iconsData.filter(icon => {
+                return icon.tags.includes(tag);
+            });
+        }
+
+        // Render icons to the grid
+        function renderIcons(icons) {
+            iconGrid.innerHTML = '';
+            
+            if (icons.length === 0) {
+                iconGrid.innerHTML = '<div class="no-results">No icons found matching your search.</div>';
+                return;
+            }
+            
+            icons.forEach(icon => {
+                const isFavorite = favorites.includes(icon.id);
+                
+                const iconCard = document.createElement('div');
+                iconCard.className = 'icon-card';
+                iconCard.innerHTML = `
+                    <div class="icon-preview">
+                        <img src="${icon.path}" alt="${icon.name}">
+                        <span class="icon-type">${icon.type}</span>
+                        <div class="icon-actions">
+                            <button class="action-btn" title="Copy to clipboard" data-id="${icon.id}" data-action="copy">
+                                <span class="material-icons">content_copy</span>
+                            </button>
+                            <button class="action-btn" title="Download" data-id="${icon.id}" data-action="download">
+                                <span class="material-icons">file_download</span>
+                            </button>
+                            <button class="action-btn ${isFavorite ? 'favorite-active' : ''}" title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}" data-id="${icon.id}" data-action="favorite">
+                                <span class="material-icons">${isFavorite ? 'favorite' : 'favorite_border'}</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="icon-info">
+                        <div class="icon-name">${icon.name}</div>
+                        <div class="icon-tags">
+                            ${icon.tags.map(tag => `<span class="icon-tag" data-tag="${tag}">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                iconGrid.appendChild(iconCard);
+            });
+            
+            // Add event listeners to the newly created elements
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.addEventListener('click', handleActionClick);
+            });
+            
+            document.querySelectorAll('.icon-tag').forEach(tag => {
+                tag.addEventListener('click', handleTagClick);
+            });
+        }
+
+        // Extract all unique tags and render them to the sidebar
+        function renderTags() {
+            // Get all unique tags and count occurrences
+            const tagCounts = {};
+            iconsData.forEach(icon => {
+                icon.tags.forEach(tag => {
+                    if (tagCounts[tag]) {
+                        tagCounts[tag]++;
+                    } else {
+                        tagCounts[tag] = 1;
+                    }
+                });
+            });
+            
+            // Sort tags alphabetically
+            const sortedTags = Object.keys(tagCounts).sort();
+            
+            // Create tag list items
+            tagList.innerHTML = '';
+            sortedTags.forEach(tag => {
+                const tagItem = document.createElement('li');
+                tagItem.dataset.tag = tag;
+                tagItem.innerHTML = `
+                    <span class="material-icons">tag</span>
+                    <span class="tag-name">${tag}</span>
+                    <span class="tag-count">${tagCounts[tag]}</span>
+                `;
+                tagList.appendChild(tagItem);
+            });
+            
+            // Add event listeners to tag list items
+            document.querySelectorAll('#tag-list li').forEach(tagItem => {
+                tagItem.addEventListener('click', () => {
+                    const tag = tagItem.dataset.tag;
+                    const filteredIcons = filterIconsByTag(tag);
+                    renderIcons(filteredIcons);
+                    searchInput.value = tag;
+                    
+                    // On mobile, close the sidebar after selecting a tag
+                    if (window.innerWidth <= 768) {
+                        toggleSidebar();
+                    }
+                });
+            });
+        }
+
+        // Handle clicks on action buttons
+        function handleActionClick(e) {
+            const button = e.currentTarget;
+            const iconId = parseInt(button.dataset.id);
+            const action = button.dataset.action;
+            const icon = iconsData.find(icon => icon.id === iconId);
+            
+            switch (action) {
+                case 'copy':
+                    // In a real application, this would copy the image to clipboard
+                    // For this demo, we'll just show an alert
+                    alert(`Copied ${icon.name} to clipboard!`);
+                    break;
+                
+                case 'download':
+                    // In a real application, this would download the image
+                    // For this demo, we'll just show an alert
+                    alert(`Downloading ${icon.name}...`);
+                    break;
+                
+                case 'favorite':
+                    toggleFavorite(iconId, button);
+                    break;
+            }
+            
+            // Stop event propagation to prevent icon card click
+            e.stopPropagation();
+        }
+
+        // Handle clicks on tags
+        function handleTagClick(e) {
+            const tag = e.currentTarget.dataset.tag;
+            const filteredIcons = filterIconsByTag(tag);
+            renderIcons(filteredIcons);
+            searchInput.value = tag;
+            
+            // Stop event propagation to prevent icon card click
+            e.stopPropagation();
+        }
+
+        // Toggle favorite status for an icon
+        function toggleFavorite(iconId, button) {
+            const index = favorites.indexOf(iconId);
+            const iconSpan = button.querySelector('.material-icons');
+            
+            if (index === -1) {
+                // Add to favorites
+                favorites.push(iconId);
+                button.classList.add('favorite-active');
+                iconSpan.textContent = 'favorite';
+                button.title = 'Remove from favorites';
+            } else {
+                // Remove from favorites
+                favorites.splice(index, 1);
+                button.classList.remove('favorite-active');
+                iconSpan.textContent = 'favorite_border';
+                button.title = 'Add to favorites';
+            }
+            
+            saveFavorites();
+        }
+
+        // Toggle dark/light theme
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeToggleIcon();
+        }
+        
+        // Update theme toggle icon based on current theme
+        function updateThemeToggleIcon() {
+            const themeIcon = document.querySelector('#theme-toggle .material-icons');
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            
+            if (currentTheme === 'dark') {
+                themeIcon.textContent = 'light_mode';
+            } else {
+                themeIcon.textContent = 'dark_mode';
+            }
+        }
+        
+        // Show only favorites
+        let showOnlyFavorites = false;
+        
+        function toggleFavoritesFilter() {
+            const favoritesBtn = document.getElementById('favorites-toggle');
+            const favoritesIcon = favoritesBtn.querySelector('.material-icons');
+            
+            showOnlyFavorites = !showOnlyFavorites;
+            
+            if (showOnlyFavorites) {
+                favoritesBtn.classList.add('active');
+                favoritesIcon.textContent = 'favorite';
+                
+                const favoriteIcons = iconsData.filter(icon => favorites.includes(icon.id));
+                renderIcons(favoriteIcons);
+            } else {
+                favoritesBtn.classList.remove('active');
+                favoritesIcon.textContent = 'favorite_border';
+                
+                // Restore search results if there's a search term
+                const searchTerm = searchInput.value.trim();
+                if (searchTerm) {
+                    const filteredIcons = filterIcons(searchTerm);
+                    renderIcons(filteredIcons);
+                } else {
+                    renderIcons(iconsData);
+                }
+            }
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Toggle sidebar when menu button is clicked
+            menuToggle.addEventListener('click', toggleSidebar);
+            
+            // Toggle theme
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            
+            // Toggle favorites filter
+            document.getElementById('favorites-toggle').addEventListener('click', toggleFavoritesFilter);
+            
+            // Search functionality
+            searchInput.addEventListener('input', () => {
+                const searchTerm = searchInput.value.trim();
+                let filteredIcons = filterIcons(searchTerm);
+                
+                // Apply favorites filter if active
+                if (showOnlyFavorites) {
+                    filteredIcons = filteredIcons.filter(icon => favorites.includes(icon.id));
+                }
+                
+                renderIcons(filteredIcons);
+            });
+            
+            // Clear search
+            clearSearch.addEventListener('click', clearSearchInput);
+            
+            // Listen for Escape key press to close sidebar and clear search
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (!sidebar.classList.contains('inactive')) {
+                        toggleSidebar();
+                    }
+                    clearSearchInput();
+                }
+            });
+        }
+
+        // Initialize the page
+        init();
+    </script>
+</body>
+</html>
