@@ -712,24 +712,52 @@
             switch (action) {
                 case 'copy':
                     const iconSpan = button.querySelector('.material-icons');
-                    
-                    // Attempt to copy the icon path (or name as fallback)
-                    navigator.clipboard.writeText(icon.path || icon.name).then(() => {
-                        // Change icon to checkmark on successful copy
-                        iconSpan.textContent = 'check';
-                        button.title = 'Copied!';
-                        
-                        // Revert icon after a delay
-                        setTimeout(() => {
+                    button.disabled = true; // Disable button during copy attempt
+                    iconSpan.textContent = 'hourglass_empty'; // Indicate processing
+                    button.title = 'Copying...';
+
+                    // Attempt to fetch the image and copy it as a Blob
+                    fetch(icon.path)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.blob(); // Get image data as a Blob
+                        })
+                        .then(blob => {
+                            // Create a ClipboardItem object
+                            const item = new ClipboardItem({ [blob.type]: blob });
+                            // Write the ClipboardItem to the clipboard
+                            return navigator.clipboard.write([item]);
+                        })
+                        .then(() => {
+                            // Success feedback
+                            iconSpan.textContent = 'check';
+                            button.title = 'Copied!';
+                        })
+                        .catch(err => {
+                            console.error('Failed to copy image:', err);
+                            alert(`Could not copy image: ${err.message}. Check console for details.`);
+                            // Failure feedback (revert to original state)
                             iconSpan.textContent = 'content_copy';
                             button.title = 'Copy to clipboard';
-                        }, 1500); // Revert after 1.5 seconds
-                        
-                    }).catch(err => {
-                        console.error('Failed to copy: ', err);
-                        // Optionally provide feedback to the user about the failure
-                        alert(`Failed to copy ${icon.name}.`);
-                    });
+                        })
+                        .finally(() => {
+                            // Re-enable button and potentially revert icon after a delay
+                            button.disabled = false;
+                            if (iconSpan.textContent === 'check') {
+                                setTimeout(() => {
+                                    if (button.title === 'Copied!') { // Check if still in copied state
+                                        iconSpan.textContent = 'content_copy';
+                                        button.title = 'Copy to clipboard';
+                                    }
+                                }, 1500); // Revert after 1.5 seconds
+                            } else {
+                                // If copying failed immediately, revert icon now
+                                iconSpan.textContent = 'content_copy';
+                                button.title = 'Copy to clipboard';
+                            }
+                        });
                     break;
                 
                 case 'download':
