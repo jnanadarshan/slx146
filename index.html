@@ -3572,6 +3572,32 @@
             // 3. Clear filters if sidebar and modal are closed
             clearFilters();
           }
+        //Modal Copy Image Shortcut C
+        } else if (event.key.toLowerCase() === 'c') {
+          // Shortcut to copy image when modal is open
+          if (modal.style.display === "block") {
+            event.preventDefault(); // Prevent default 'c' action
+            copyImageBtn.click(); // Trigger the existing copy button's click handler
+          }
+        //End Modal Copy Image Shortcut C
+
+        //Shortcut key D Starts
+        } else if (event.key.toLowerCase() === 'd') {
+          // Check if the focus is on an input field or textarea
+          const activeElement = document.activeElement;
+          const isInputFocused = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
+
+          if (!isInputFocused) { // Only toggle if not typing in an input
+            event.preventDefault(); // Prevent typing 'd' if not in an input
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme); // Use the existing setTheme function
+
+            // Update the theme toggle icon as well
+            const themeIcon = themeToggle.querySelector('.material-symbols-outlined');
+            themeIcon.textContent = newTheme === 'dark' ? 'light_mode' : 'dark_mode';
+          }
+          //End Shortcut key D
         }
       });
       
