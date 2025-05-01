@@ -794,24 +794,45 @@
                     fetch(icon.path)
                         .then(response => {
                             if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
+                                throw new Error(`HTTP error fetching image! status: ${response.status}`);
                             }
-                            return response.blob(); // Get image data as a Blob
+                            // Clone the response so we can potentially read it twice (blob and text)
+                            return response.clone().blob().then(blob => ({ blob, response }));
                         })
-                        .then(blob => {
-                            // Create a ClipboardItem object
+                        .then(({ blob, response }) => {
+                            console.log('Attempting to copy blob with type:', blob.type);
+
+                            // Try copying as a blob first (works for PNG, might work for others)
                             const item = new ClipboardItem({ [blob.type]: blob });
-                            // Write the ClipboardItem to the clipboard
-                            return navigator.clipboard.write([item]);
+                            return navigator.clipboard.write([item])
+                                .then(() => ({ success: true, type: blob.type })) // Indicate success
+                                .catch(blobWriteError => {
+                                    console.warn(`Failed to copy as blob (${blob.type}):`, blobWriteError);
+                                    // If blob copy failed AND it's an SVG, try copying as text
+                                    if (blob.type === 'image/svg+xml') {
+                                        console.log('Blob copy failed for SVG, attempting to copy as text...');
+                                        return response.text().then(svgText => { // Read the original response as text
+                                            return navigator.clipboard.writeText(svgText)
+                                                .then(() => ({ success: true, type: 'text/svg' })) // Indicate text copy success
+                                                .catch(textWriteError => {
+                                                    console.error('Failed to copy SVG as text:', textWriteError);
+                                                    // Combine errors for a more informative message
+                                                    throw new Error(`Failed to copy SVG as blob or text. Blob Error: ${blobWriteError.message}. Text Error: ${textWriteError.message}`);
+                                                });
+                                        });
+                                    }
+                                    // If it wasn't SVG or text copy also failed, re-throw the original blob error
+                                    throw blobWriteError; // Re-throw the original error if not SVG or text fallback failed
+                                });
                         })
-                        .then(() => {
-                            // Success feedback
+                        .then(({ success, type }) => {
+                            console.log(`Successfully copied as ${type}`);
                             iconSpan.textContent = 'check';
                             button.title = 'Copied!';
                         })
                         .catch(err => {
                             console.error('Failed to copy image:', err);
-                            alert(`Could not copy image to clipboard. This feature might require HTTPS or specific browser permissions. Error: ${err.message}`);
+                            alert(`Could not copy image. Browser limitations or security settings (like HTTPS) might be the cause. Error: ${err.message}`);
                             // Failure feedback (revert to original state)
                             iconSpan.textContent = 'content_copy';
                             button.title = 'Copy to clipboard';
