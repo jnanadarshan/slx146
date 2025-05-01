@@ -426,7 +426,6 @@
                 id: 1,
                 name: "Office Building",
                 tags: ["office", "building", "cart"],
-                type: "PNG",
                 path: "icons/office-building.png"
             },
             {
@@ -610,13 +609,20 @@
             
             icons.forEach(icon => {
                 const isFavorite = favorites.includes(icon.id);
+                let fileExtension = 'N/A'; // Default if no extension found
+                
+                // Extract file extension from path
+                const pathParts = icon.path.split('.');
+                if (pathParts.length > 1) {
+                    fileExtension = pathParts.pop().toUpperCase();
+                }
                 
                 const iconCard = document.createElement('div');
                 iconCard.className = 'icon-card';
                 iconCard.innerHTML = `
                     <div class="icon-preview">
                         <img src="${icon.path}" alt="${icon.name}">
-                        <span class="icon-type">${icon.type}</span>
+                        <span class="icon-type">${fileExtension}</span>
                         <div class="icon-actions">
                             <button class="action-btn" title="Copy to clipboard" data-id="${icon.id}" data-action="copy">
                                 <span class="material-icons">content_copy</span>
