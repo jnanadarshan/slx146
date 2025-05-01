@@ -811,7 +811,7 @@
                         })
                         .catch(err => {
                             console.error('Failed to copy image:', err);
-                            alert(`Could not copy image: ${err.message}. Check console for details.`);
+                            alert(`Could not copy image to clipboard. This feature might require HTTPS or specific browser permissions. Error: ${err.message}`);
                             // Failure feedback (revert to original state)
                             iconSpan.textContent = 'content_copy';
                             button.title = 'Copy to clipboard';
