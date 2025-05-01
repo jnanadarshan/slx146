@@ -1,0 +1,111 @@
+[
+  {
+    "name": "Adi",
+    "tags": [
+      "ADI"
+    ],
+    "path": "icons/adi.svg"
+  },
+  {
+    "name": "Amat",
+    "tags": [],
+    "path": "icons/amat.svg"
+  },
+  {
+    "name": "Amd",
+    "tags": [],
+    "path": "icons/amd.svg"
+  },
+  {
+    "name": "Asml",
+    "tags": [],
+    "path": "icons/asml.svg"
+  },
+  {
+    "name": "Critical Manufacturing",
+    "tags": [],
+    "path": "icons/critical-manufacturing.jpg"
+  },
+  {
+    "name": "Google Gemini",
+    "tags": [],
+    "path": "icons/google-gemini.svg"
+  },
+  {
+    "name": "Google",
+    "tags": [],
+    "path": "icons/Google.svg"
+  },
+  {
+    "name": "Infineon",
+    "tags": [],
+    "path": "icons/infineon.svg"
+  },
+  {
+    "name": "Intel",
+    "tags": [],
+    "path": "icons/intel.svg"
+  },
+  {
+    "name": "Kla",
+    "tags": [],
+    "path": "icons/kla.svg"
+  },
+  {
+    "name": "Lam Research",
+    "tags": [],
+    "path": "icons/lam-research.svg"
+  },
+  {
+    "name": "Micron",
+    "tags": [],
+    "path": "icons/micron.png"
+  },
+  {
+    "name": "Nvidia",
+    "tags": [],
+    "path": "icons/nvidia.svg"
+  },
+  {
+    "name": "Nxp",
+    "tags": [],
+    "path": "icons/nxp.svg"
+  },
+  {
+    "name": "Office Building",
+    "tags": [],
+    "path": "icons/office-building.png"
+  },
+  {
+    "name": "Onsemi",
+    "tags": [],
+    "path": "icons/onsemi.svg"
+  },
+  {
+    "name": "Openai Wide",
+    "tags": [],
+    "path": "icons/openai-wide.svg"
+  },
+  {
+    "name": "Openai",
+    "tags": [],
+    "path": "icons/openai.svg"
+  },
+  {
+    "name": "Qorvo",
+    "tags": [],
+    "path": "icons/qorvo.svg"
+  },
+  {
+    "name": "Siemens",
+    "tags": [],
+    "path": "icons/siemens.svg"
+  },
+  {
+    "name": "TSMC",
+    "tags": [
+      "XX"
+    ],
+    "path": "icons/tsmc.svg"
+  }
+]

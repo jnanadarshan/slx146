@@ -67,40 +67,44 @@
             width: 250px;
         }
 
-        .sidebar.inactive .sidebar-content {
-            opacity: 0;
-        }
-
         .tag-list {
             list-style: none;
+            margin-top: 15px;
         }
 
         .tag-list li {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            padding: 5px;
-            border-radius: 4px;
-            transition: var(--transition);
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            background-color: transparent;
         }
 
         .tag-list li:hover {
-            background-color: var(--light-gray);
+            background-color: var(--medium-gray);
+            transform: translateX(5px);
         }
 
         .tag-name {
-            font-size: 0.9rem; /* Slightly smaller font */
-            margin-left: 10px;
+            font-size: 0.9rem;
+            margin-left: 12px;
+            color: var(--text-color);
+            font-weight: 500;
         }
 
         .tag-count {
             margin-left: auto;
-            font-size: 0.75rem; /* Slightly smaller font */
-            background-color: var(--medium-gray);
-            border-radius: 10px;
+            font-size: 0.75rem;
+            background-color: var(--primary-color);
+            color: var(--white);
+            border-radius: 12px;
             padding: 2px 8px;
-            font-size: 0.8rem;
+            font-weight: 600;
+            min-width: 24px;
+            text-align: center;
         }
 
         .main-content {
@@ -425,89 +429,146 @@
         // Sample data (this would be loaded from a database in a real application)
         const iconsData = [
             {
-                id: 1,
-                name: "Office Building",
-                tags: ["office", "building", "cart"],
-                path: "icons/office-building.png"
+                "name": "ADI",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/adi.svg"
             },
             {
-                id: 2,
-                name: "User Profile",
-                tags: ["user", "profile", "account"],
-                type: "PNG",
-                path: "/api/placeholder/100/100"
+                "name": "Applied Materials",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/amat.svg"
             },
             {
-                id: 3,
-                name: "Settings Gear",
-                tags: ["settings", "options", "gear"],
-                type: "SVG",
-                path: "/api/placeholder/100/100"
+                "name": "AMD",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/amd.svg"
             },
             {
-                id: 4,
-                name: "Download Arrow",
-                tags: ["download", "arrow", "save"],
-                type: "JPG",
-                path: "/api/placeholder/100/100"
+                "name": "ASML",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/asml.svg"
             },
             {
-                id: 5,
-                name: "Heart",
-                tags: ["love", "like", "favorite"],
-                type: "SVG",
-                path: "/api/placeholder/100/100"
+                "name": "Critical Manufacturing",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/critical-manufacturing.jpg"
             },
             {
-                id: 6,
-                name: "Notification Bell",
-                tags: ["notification", "alert", "bell"],
-                type: "PNG",
-                path: "/api/placeholder/100/100"
+                "name": "Google Gemini",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/google-gemini.svg"
             },
             {
-                id: 7,
-                name: "Cloud Upload",
-                tags: ["cloud", "upload", "storage"],
-                type: "SVG",
-                path: "/api/placeholder/100/100"
+                "name": "Google",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/Google.svg"
             },
             {
-                id: 8,
-                name: "Lock",
-                tags: ["security", "lock", "password"],
-                type: "PNG",
-                path: "/api/placeholder/100/100"
+                "name": "Infineon",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/infineon.svg"
             },
             {
-                id: 9,
-                name: "Calendar",
-                tags: ["date", "calendar", "schedule"],
-                type: "SVG",
-                path: "/api/placeholder/100/100"
+                "name": "Intel",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/intel.svg"
             },
             {
-                id: 10,
-                name: "Play Button",
-                tags: ["play", "video", "media"],
-                type: "JPG",
-                path: "/api/placeholder/100/100"
+                "name": "KLA",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/kla.svg"
             },
             {
-                id: 11,
-                name: "Bookmark",
-                tags: ["bookmark", "save", "favorite"],
-                type: "SVG",
-                path: "/api/placeholder/100/100"
+                "name": "Lam Research",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/lam-research.svg"
             },
             {
-                id: 12,
-                name: "Home",
-                tags: ["home", "house", "main"],
-                type: "PNG",
-                path: "/api/placeholder/100/100"
+                "name": "Micron",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/micron.png"
+            },
+            {
+                "name": "Nvidia",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/nvidia.svg"
+            },
+            {
+                "name": "Nxp",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/nxp.svg"
+            },
+            {
+                "name": "Onsemi",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/onsemi.svg"
+            },
+            {
+                "name": "OpenAI",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/openai-wide.svg"
+            },
+            {
+                "name": "openAI",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/openai.svg"
+            },
+            {
+                "name": "Qorvo",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/qorvo.svg"
+            },
+            {
+                "name": "Siemens",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/siemens.svg"
+            },
+            {
+                "name": "TSMC",
+                "tags": [
+                "company"
+                ],
+                "path": "icons/tsmc.svg"
             }
-        ];
+            ];
 
         // DOM elements
         const sidebar = document.getElementById('sidebar');
@@ -519,7 +580,7 @@
         const iconGrid = document.getElementById('icon-grid');
         const tagList = document.getElementById('tag-list');
 
-        // Favorites from cookies
+        // Favorites from cookies (will now store names instead of IDs)
         let favorites = [];
         
         // Initialize the page
@@ -600,6 +661,15 @@
             });
         }
 
+        // Fisher-Yates shuffle algorithm
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
         // Render icons to the grid
         function renderIcons(icons) {
             iconGrid.innerHTML = '';
@@ -609,11 +679,13 @@
                 return;
             }
             
-            icons.forEach(icon => {
-                const isFavorite = favorites.includes(icon.id);
-                let fileExtension = 'N/A'; // Default if no extension found
+            // Create a copy and shuffle it
+            const shuffledIcons = shuffleArray([...icons]);
+            
+            shuffledIcons.forEach(icon => {
+                const isFavorite = favorites.includes(icon.name);
+                let fileExtension = 'N/A';
                 
-                // Extract file extension from path
                 const pathParts = icon.path.split('.');
                 if (pathParts.length > 1) {
                     fileExtension = pathParts.pop().toUpperCase();
@@ -626,13 +698,13 @@
                         <img src="${icon.path}" alt="${icon.name}">
                         <span class="icon-type">${fileExtension}</span>
                         <div class="icon-actions">
-                            <button class="action-btn" title="Copy to clipboard" data-id="${icon.id}" data-action="copy">
+                            <button class="action-btn" title="Copy to clipboard" data-name="${icon.name}" data-action="copy">
                                 <span class="material-icons">content_copy</span>
                             </button>
-                            <button class="action-btn" title="Download" data-id="${icon.id}" data-action="download">
+                            <button class="action-btn" title="Download" data-name="${icon.name}" data-action="download">
                                 <span class="material-icons">file_download</span>
                             </button>
-                            <button class="action-btn ${isFavorite ? 'favorite-active' : ''}" title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}" data-id="${icon.id}" data-action="favorite">
+                            <button class="action-btn ${isFavorite ? 'favorite-active' : ''}" title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}" data-name="${icon.name}" data-action="favorite">
                                 <span class="material-icons">${isFavorite ? 'favorite' : 'favorite_border'}</span>
                             </button>
                         </div>
@@ -681,7 +753,7 @@
                 const tagItem = document.createElement('li');
                 tagItem.dataset.tag = tag;
                 tagItem.innerHTML = `
-                    <span class="material-icons">tag</span>
+                    <span class="material-icons" style="font-size: 8px;">circle</span>
                     <span class="tag-name">${tag}</span>
                     <span class="tag-count">${tagCounts[tag]}</span>
                 `;
@@ -707,9 +779,9 @@
         // Handle clicks on action buttons
         function handleActionClick(e) {
             const button = e.currentTarget;
-            const iconId = parseInt(button.dataset.id);
+            const iconName = button.dataset.name;
             const action = button.dataset.action;
-            const icon = iconsData.find(icon => icon.id === iconId);
+            const icon = iconsData.find(icon => icon.name === iconName);
             
             switch (action) {
                 case 'copy':
@@ -769,7 +841,7 @@
                     break;
                 
                 case 'favorite':
-                    toggleFavorite(iconId, button);
+                    toggleFavorite(iconName, button);
                     break;
             }
             
@@ -789,13 +861,13 @@
         }
 
         // Toggle favorite status for an icon
-        function toggleFavorite(iconId, button) {
-            const index = favorites.indexOf(iconId);
+        function toggleFavorite(iconName, button) {
+            const index = favorites.indexOf(iconName);
             const iconSpan = button.querySelector('.material-icons');
             
             if (index === -1) {
                 // Add to favorites
-                favorites.push(iconId);
+                favorites.push(iconName);
                 button.classList.add('favorite-active');
                 iconSpan.textContent = 'favorite';
                 button.title = 'Remove from favorites';
@@ -845,7 +917,7 @@
                 favoritesBtn.classList.add('active');
                 favoritesIcon.textContent = 'favorite';
                 
-                const favoriteIcons = iconsData.filter(icon => favorites.includes(icon.id));
+                const favoriteIcons = iconsData.filter(icon => favorites.includes(icon.name));
                 renderIcons(favoriteIcons);
             } else {
                 favoritesBtn.classList.remove('active');
@@ -880,7 +952,7 @@
                 
                 // Apply favorites filter if active
                 if (showOnlyFavorites) {
-                    filteredIcons = filteredIcons.filter(icon => favorites.includes(icon.id));
+                    filteredIcons = filteredIcons.filter(icon => favorites.includes(icon.name));
                 }
                 
                 renderIcons(filteredIcons);
