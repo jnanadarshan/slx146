@@ -776,6 +776,33 @@
             });
         }
 
+        // Helper function to copy image via canvas (as PNG)
+        function copyImageViaCanvas(blob) {
+            return new Promise((resolve, reject) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                const objectURL = URL.createObjectURL(blob);
+
+                img.onload = () => {
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    ctx.drawImage(img, 0, 0);
+                    URL.revokeObjectURL(objectURL); // Clean up object URL
+                    canvas.toBlob((pngBlob) => {
+                        if (pngBlob) {
+                            const item = new ClipboardItem({ 'image/png': pngBlob });
+                            resolve(navigator.clipboard.write([item]));
+                        } else {
+                            reject(new Error('Canvas toBlob conversion failed.'));
+                        }
+                    }, 'image/png');
+                };
+                img.onerror = (err) => reject(new Error(`Failed to load image onto canvas. Error: ${err}`));
+                img.src = objectURL;
+            });
+        }
+
         // Handle clicks on action buttons
         function handleActionClick(e) {
             const button = e.currentTarget;
@@ -793,33 +820,35 @@
                     fetch(icon.path)
                         .then(response => {
                             if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
+                                throw new Error(`HTTP error fetching image! status: ${response.status}`);
                             }
-                            const contentType = response.headers.get('content-type');
-                            
-                            // Handle SVG files differently
-                            if (contentType && contentType.includes('svg')) {
-                                return response.text().then(svgText => ({
-                                    type: 'svg',
-                                    content: svgText
-                                }));
-                            }
-                            
-                            // Handle other image types as blobs
-                            return response.blob().then(blob => ({
-                                type: 'blob',
-                                content: blob
-                            }));
+                            // Clone response to potentially use it in fallback
+                            return response.clone().blob().then(blob => ({ blob, response }));
                         })
-                        .then(data => {
-                            if (data.type === 'svg') {
-                                return navigator.clipboard.writeText(data.content);
-                            } else {
-                                const item = new ClipboardItem({ [data.content.type]: data.content });
-                                return navigator.clipboard.write([item]);
-                            }
+                        .then(({ blob, response }) => {
+                            console.log('Attempting to copy blob with type:', blob.type);
+                            const item = new ClipboardItem({ [blob.type]: blob });
+
+                            // Try writing the original blob type first
+                            return navigator.clipboard.write([item])
+                                .then(() => ({ success: true, type: blob.type }))
+                                .catch(blobWriteError => {
+                                    console.warn(`Failed to copy as blob (${blob.type}):`, blobWriteError);
+                                    // If direct blob write fails for any image type, try canvas fallback
+                                    if (blob.type.startsWith('image/')) {
+                                        console.log(`Image blob copy failed (${blob.type}), attempting canvas fallback...`);
+                                        return copyImageViaCanvas(blob)
+                                            .then(() => ({ success: true, type: 'image/png (via canvas)' }))
+                                            .catch(canvasError => {
+                                                console.error('Canvas fallback failed:', canvasError);
+                                                throw new Error(`Failed to copy image as blob or via canvas. Blob Error: ${blobWriteError.message}. Canvas Error: ${canvasError.message}`);
+                                            });
+                                    }
+                                    throw blobWriteError; // Re-throw if not an image or canvas fallback failed
+                                });
                         })
-                        .then(() => {
+                        .then(({ success, type }) => {
+                            console.log(`Successfully copied as ${type}`);
                             iconSpan.textContent = 'check';
                             button.title = 'Copied!';
                             setTimeout(() => {
@@ -829,7 +858,7 @@
                         })
                         .catch(err => {
                             console.error('Failed to copy:', err);
-                            alert('Failed to copy image to clipboard');
+                            alert(`Could not copy image. Browser limitations or security settings (like HTTPS) might be the cause. Error: ${err.message}`);
                             iconSpan.textContent = 'content_copy';
                             button.title = 'Copy to clipboard';
                         })
@@ -841,7 +870,38 @@
                 case 'download':
                     // In a real application, this would download the image
                     // For this demo, we'll just show an alert
-                    alert(`Downloading ${icon.name}...`);
+                    button.disabled = true; // Disable button during download
+                    const downloadIconSpan = button.querySelector('.material-icons');
+                    downloadIconSpan.textContent = 'hourglass_empty'; // Show progress
+                    button.title = 'Downloading...';
+
+                    fetch(icon.path)
+                        .then(response => {
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            return response.blob();
+                        })
+                        .then(blob => {
+                            const url = window.URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            // Extract original filename from path for download attribute
+                            const filename = icon.path.substring(icon.path.lastIndexOf('/') + 1);
+                            link.setAttribute('download', filename || `${icon.name}.unknown`); // Use original filename or fallback
+                            document.body.appendChild(link);
+                            link.click();
+                            link.parentNode.removeChild(link);
+                            window.URL.revokeObjectURL(url); // Clean up
+                        })
+                        .catch(err => {
+                            console.error('Download failed:', err);
+                            alert(`Could not download image: ${err.message}`);
+                        })
+                        .finally(() => {
+                            // Restore button state
+                            downloadIconSpan.textContent = 'file_download';
+                            button.title = 'Download';
+                            button.disabled = false;
+                        });
                     break;
                 
                 case 'favorite':
