@@ -303,11 +303,12 @@
         .icon-actions {
             position: absolute;
             top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
+            right: 8px;
+            transform: translateY(-50%) scale(0);
             background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 20px;
+            border-radius: 8px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             padding: 5px;
             box-shadow: var(--shadow);
@@ -316,7 +317,7 @@
         }
 
         .icon-preview:hover .icon-actions {
-            transform: translate(-50%, -50%) scale(1);
+            transform: translateY(-50%) scale(1);
             opacity: 1;
         }
 
@@ -327,13 +328,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 5px;
+            margin: 3px 0;
+            width: 32px;
+            height: 32px;
             color: var(--dark-gray);
             transition: var(--transition);
+            border-radius: 4px;
         }
 
         .action-btn:hover {
             color: var(--primary-color);
+            background-color: var(--light-gray);
         }
 
         .favorite-active {
@@ -345,6 +350,31 @@
             padding: 40px;
             color: var(--dark-gray);
             grid-column: 1 / -1;
+        }
+
+        .icon-badges {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .variant-selector {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 3px 6px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .variant-selector:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.3);
         }
 
         /* Responsive styles */
@@ -570,6 +600,19 @@
             }
             ];
 
+        let iconVariants = {};
+
+        // Load icon variants
+        async function loadIconVariants() {
+            try {
+                const response = await fetch('icon-variants.json');
+                if (!response.ok) throw new Error('Failed to load variants');
+                iconVariants = await response.json();
+            } catch (error) {
+                console.error('Error loading icon variants:', error);
+            }
+        }
+
         // DOM elements
         const sidebar = document.getElementById('sidebar');
         const header = document.getElementById('header');
@@ -584,7 +627,8 @@
         let favorites = [];
         
         // Initialize the page
-        function init() {
+        async function init() {
+            await loadIconVariants();
             loadFavorites();
             renderIcons(iconsData);
             renderTags();
@@ -695,8 +739,13 @@
                 iconCard.className = 'icon-card';
                 iconCard.innerHTML = `
                     <div class="icon-preview">
-                        <img src="${icon.path}" alt="${icon.name}">
-                        <span class="icon-type">${fileExtension}</span>
+                        <img src="${icon.path}" alt="${icon.name}" id="preview-${icon.name.replace(/\s+/g, '-')}">
+                        <div class="icon-badges">
+                            <span class="icon-type">${fileExtension}</span>
+                            <select class="variant-selector" data-icon="${icon.name}" style="display: none;">
+                                <!-- Variants will be populated here -->
+                            </select>
+                        </div>
                         <div class="icon-actions">
                             <button class="action-btn" title="Copy to clipboard" data-name="${icon.name}" data-action="copy">
                                 <span class="material-icons">content_copy</span>
@@ -718,6 +767,23 @@
                 `;
                 
                 iconGrid.appendChild(iconCard);
+
+                const variantSelector = iconCard.querySelector('.variant-selector');
+                if (iconVariants[icon.name]) {
+                    variantSelector.style.display = 'inline-block';
+                    Object.keys(iconVariants[icon.name]).forEach(size => {
+                        const option = document.createElement('option');
+                        option.value = iconVariants[icon.name][size];
+                        option.textContent = size;
+                        variantSelector.appendChild(option);
+                    });
+                    
+                    // Add change event listener
+                    variantSelector.addEventListener('change', (e) => {
+                        const imgElement = document.getElementById(`preview-${icon.name.replace(/\s+/g, '-')}`);
+                        imgElement.src = e.target.value;
+                    });
+                }
             });
             
             // Add event listeners to the newly created elements

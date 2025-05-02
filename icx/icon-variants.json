@@ -1,0 +1,11 @@
+{
+  "ADI": {
+    "128px": "icons/adi-128px.svg",
+    "256px": "icons/adi-256px.svg",
+    "512px": "icons/adi-512px.svg"
+  },
+  "Applied Materials": {
+    "128px": "icons/amat-128px.svg",
+    "256px": "icons/amat-256px.svg"
+  }
+}
