@@ -354,13 +354,12 @@
 
         .variant-selector {
             /* Updated styles for placement in .icon-info */
-            width: 100%;
-            margin-top: 8px; /* Space above */
-            margin-bottom: 8px; /* Space below */
-            padding: 4px 6px; /* Consistent padding */
+            /* Removed width: 100% */
+            margin: 0; /* Remove margins */
+            padding: 2px 4px; /* Make padding smaller */
             border: 1px solid var(--medium-gray); /* Subtle border */
             border-radius: 4px; /* Slightly rounded corners */
-            font-size: 0.7rem;
+            font-size: 0.65rem; /* Make font smaller */
             color: var(--dark-gray); /* Less prominent text color */
             font-weight: bold;
             cursor: pointer;
@@ -379,6 +378,32 @@
         .variant-selector:focus {
             outline: none;
             box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.3);
+        }
+
+        .variant-filter-wrapper {
+            margin-right: 10px;
+            background: none;
+        }
+
+        .variant-filter {
+            padding: 5px 10px;
+            border-radius: 15px;
+            border: 1px solid var(--medium-gray);
+            background: var(--light-gray);
+            color: var(--text-color);
+            font-size: 0.8rem;
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .variant-filter:hover {
+            border-color: var(--primary-color);
+        }
+
+        .variant-filter:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
         }
 
         /* Responsive styles */
@@ -436,6 +461,11 @@
             <span class="material-icons clear-search" id="clear-search">close</span>
         </div>
         <div class="header-actions">
+            <div class="action-icon variant-filter-wrapper">
+                <select class="variant-filter" id="variant-filter" title="Filter by variant size">
+                    <option value="">All sizes</option>
+                </select>
+            </div>
             <div class="action-icon favorites-btn" id="favorites-toggle" title="Show favorites only">
                 <span class="material-icons">favorite_border</span>
             </div>
@@ -605,6 +635,7 @@
             ];
 
         let iconVariants = {};
+        let selectedVariant = '';
 
         // Load icon variants
         async function loadIconVariants() {
@@ -612,6 +643,21 @@
                 const response = await fetch('icon-variants.json');
                 if (!response.ok) throw new Error('Failed to load variants');
                 iconVariants = await response.json();
+                
+                // Collect all unique variant sizes
+                const variantSizes = new Set();
+                Object.values(iconVariants).forEach(variants => {
+                    Object.keys(variants).forEach(size => variantSizes.add(size));
+                });
+                
+                // Populate variant filter dropdown
+                const variantFilter = document.getElementById('variant-filter');
+                [...variantSizes].sort().forEach(size => {
+                    const option = document.createElement('option');
+                    option.value = size;
+                    option.textContent = size;
+                    variantFilter.appendChild(option);
+                });
             } catch (error) {
                 console.error('Error loading icon variants:', error);
             }
@@ -691,15 +737,25 @@
 
         // Filter icons by search term
         function filterIcons(searchTerm) {
-            if (!searchTerm) {
-                return iconsData;
+            let filtered = iconsData;
+            
+            // First filter by variant if selected
+            if (selectedVariant) {
+                filtered = filtered.filter(icon => 
+                    iconVariants[icon.name] && iconVariants[icon.name][selectedVariant]
+                );
             }
             
-            searchTerm = searchTerm.toLowerCase();
-            return iconsData.filter(icon => {
-                return icon.name.toLowerCase().includes(searchTerm) || 
-                       icon.tags.some(tag => tag.toLowerCase().includes(searchTerm));
-            });
+            // Then apply search term filter
+            if (searchTerm) {
+                searchTerm = searchTerm.toLowerCase();
+                filtered = filtered.filter(icon => {
+                    return icon.name.toLowerCase().includes(searchTerm) || 
+                           icon.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+                });
+            }
+            
+            return filtered;
         }
 
         // Filter icons by tag
@@ -1107,6 +1163,20 @@
                     }
                     clearSearchInput();
                 }
+            });
+
+            // Add variant filter listener
+            document.getElementById('variant-filter').addEventListener('change', (e) => {
+                selectedVariant = e.target.value;
+                const searchTerm = searchInput.value.trim();
+                let filteredIcons = filterIcons(searchTerm);
+                
+                // Apply favorites filter if active
+                if (showOnlyFavorites) {
+                    filteredIcons = filteredIcons.filter(icon => favorites.includes(icon.name));
+                }
+                
+                renderIcons(filteredIcons);
             });
         }
 
