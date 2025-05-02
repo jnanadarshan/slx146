@@ -361,6 +361,11 @@
             align-items: center;
         }
 
+        .icon-badges {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
         .variant-selector {
             /* Updated styles for placement in .icon-info */
             width: 100%;
@@ -374,6 +379,16 @@
             font-weight: bold;
             cursor: pointer;
         }
+
+        .variant-selector-wrapper {
+          position: absolute;
+          left: 8px;
+          top: 8px;
+          /* width: 50%; */
+          /*transform: translateX(-50%);*/
+        }
+
+
 
         .variant-selector:focus {
             outline: none;
@@ -745,10 +760,14 @@
                         <img src="${icon.path}" alt="${icon.name}" id="preview-${icon.name.replace(/\s+/g, '-')}">
                         <div class="icon-badges">
                             <span class="icon-type">${fileExtension}</span>
-                            <!-- Variant selector moved to .icon-info -->
+                            <div class="variant-selector-wrapper">
+                                <select class="variant-selector" data-icon="${icon.name}" style="display: none;">
+                                    <!-- Variants will be populated here -->
+                                </select>
+                            </div>
                         </div>
                         <div class="icon-actions">
-                            <button class="action-btn" title="Copy to clipboard" data-name="${icon.name}" data-action="copy">
+                        <button class="action-btn" title="Copy to clipboard" data-name="${icon.name}" data-action="copy">
                                 <span class="material-icons">content_copy</span>
                             </button>
                             <button class="action-btn" title="Download" data-name="${icon.name}" data-action="download">
@@ -761,9 +780,7 @@
                     </div>
                     <div class="icon-info">
                         <div class="icon-name">${icon.name}</div>
-                        <select class="variant-selector" data-icon="${icon.name}" style="display: none;">
-                            <!-- Variants will be populated here -->
-                        </select>
+
                         <div class="icon-tags">
                             ${icon.tags.map(tag => `<span class="icon-tag" data-tag="${tag}">${tag}</span>`).join('')}
                         </div>
@@ -773,7 +790,7 @@
                 iconGrid.appendChild(iconCard);
 
                 const variantSelector = iconCard.querySelector('.variant-selector');
-                // Check if variants exist for this icon name in the loaded iconVariants data
+              // Check if variants exist for this icon name in the loaded iconVariants data
                 if (iconVariants[icon.name]) {
                     variantSelector.style.display = 'inline-block';
                     Object.keys(iconVariants[icon.name]).forEach(size => {
@@ -788,6 +805,7 @@
                         const imgElement = document.getElementById(`preview-${icon.name.replace(/\s+/g, '-')}`);
                         imgElement.src = e.target.value;
                     });
+
                 }
             });
             
