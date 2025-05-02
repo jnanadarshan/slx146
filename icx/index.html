@@ -352,20 +352,6 @@
             grid-column: 1 / -1;
         }
 
-        .icon-badges {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            display: flex;
-            gap: 4px;
-            align-items: center;
-        }
-
-        .icon-badges {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
         .variant-selector {
             /* Updated styles for placement in .icon-info */
             width: 100%;
@@ -758,13 +744,12 @@
                 iconCard.innerHTML = `
                     <div class="icon-preview">
                         <img src="${icon.path}" alt="${icon.name}" id="preview-${icon.name.replace(/\s+/g, '-')}">
-                        <div class="icon-badges">
-                            <span class="icon-type">${fileExtension}</span>
-                            <div class="variant-selector-wrapper">
-                                <select class="variant-selector" data-icon="${icon.name}" style="display: none;">
-                                    <!-- Variants will be populated here -->
-                                </select>
-                            </div>
+                        <!-- Position type and variant selector directly -->
+                        <span class="icon-type">${fileExtension}</span>
+                        <div class="variant-selector-wrapper">
+                            <select class="variant-selector" data-icon="${icon.name}" style="display: none;">
+                                <!-- Variants will be populated here -->
+                            </select>
                         </div>
                         <div class="icon-actions">
                         <button class="action-btn" title="Copy to clipboard" data-name="${icon.name}" data-action="copy">
