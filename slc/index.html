@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Library Manager</title>
+    <style>
+        :root {
+            --primary-color: #007bff; /* Modern Blue */
+            --secondary-color: #6c757d; /* Muted Grey */
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;    /* Light background for elements */
+            --white-bg: #ffffff;    /* Card/modal backgrounds */
+            --body-bg: #e9ecef;     /* Overall page background */
+            --dark-text: #212529;   /* Main text color */
+            --muted-text: #6c757d;  /* Secondary/muted text */
+            --border-color: #ced4da; /* Borders */
+            --success-color: #28a745; /* Modern Green */
+            --shadow-sm: 0 .125rem .25rem rgba(0,0,0,.075);
+            --shadow: 0 .5rem 1rem rgba(0,0,0,.1);
+            --shadow-lg: 0 1rem 3rem rgba(0,0,0,.125);
+            --border-radius-sm: 0.25rem; /* 4px */
+            --border-radius: 0.375rem; /* 6px */
+            --border-radius-lg: 0.5rem; /* 8px */
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        
+        body {
+            background-color: var(--body-bg);
+            color: var(--dark-text);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            padding: 1.5rem 1rem;
+            color: white;
+            text-align: center;
+            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+        }
+        
+        .search-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: var(--white-bg);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .search-box {
+            display: flex;
+            flex-grow: 1;
+            margin-right: 15px;
+        }
+        
+        #search {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+        }
+        
+        .filter-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .filter-container select {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--white-bg);
+        }
+        
+        .tag-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .tag-filter {
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            padding: 6px 12px;
+            border-radius: 16px; /* Pill shape */
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+
+        .tag-filter:hover {
+            background-color: #e2e6ea; /* Slightly darker light-bg */
+        }
+        
+        .tag-filter.active {
+            background-color: var(--primary-color); /* Use a darker shade of primary for active */
+            color: white;
+        }
+        
+        .pdf-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .pdf-card {
+            background-color: var(--white-bg);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .pdf-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+        
+        .pdf-thumbnail {
+            height: 160px;
+            background-color: var(--light-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: var(--muted-text);
+        }
+        
+        .pdf-info {
+            padding: 15px;
+        }
+        
+        .pdf-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: var(--dark-text);
+        }
+        
+        .pdf-summary {
+            font-size: 14px;
+            color: var(--muted-text);
+            margin-bottom: 15px;
+        }
+        
+        .pdf-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .pdf-tag {
+            background-color: var(--light-bg);
+            color: var(--muted-text);
+            padding: 3px 8px;
+            border-radius: var(--border-radius-sm);
+            font-size: 12px;
+        }
+        
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background-color: var(--light-bg); /* Subtle background for actions */
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s ease-in-out;
+        }
+        
+        .btn:hover {
+            background-color: #0056b3; /* Darker primary */
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 10px;
+        }
+        
+        .pagination button {
+            padding: 8px 14px;
+            background-color: var(--white-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        }
+        
+        .pagination button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color); /* Ensure border matches */
+        }
+        
+        .pagination button:hover:not(.active) {
+            background-color: var(--light-bg);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        
+        .modal-content {
+            background-color: var(--white-bg);
+            margin: 5% auto;
+            padding: 25px;
+            width: 80%;
+            max-width: 800px;
+            border-radius: var(--border-radius-lg);
+            max-height: 80vh;
+            box-shadow: var(--shadow-lg);
+            overflow-y: auto;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: var(--dark-text);
+        }
+        
+        .stats {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: var(--white-bg);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .stats h3 {
+            margin-bottom: 10px;
+            color: var(--dark-text);
+        }
+        
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .stat-box {
+            flex: 1;
+            background-color: var(--light-bg);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            min-width: 150px;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--muted-text);
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: var(--muted-text);
+            background-color: var(--white-bg);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        @media (max-width: 768px) {
+            .pdf-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            }
+            
+            .search-container {
+                flex-direction: column;
+            }
+            
+            .search-box {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            
+            .filter-container {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PDF Library Manager</h1>
+            <p>Organize and search your PDF presentations</p>
+        </header>
+        
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="search" placeholder="Search PDFs by title, summary or tags...">
+            </div>
+            <div class="filter-container">
+                <select id="sortBy">
+                    <option value="title">Sort by Title</option>
+                    <option value="date">Sort by Date</option>
+                    <option value="size">Sort by Size</option>
+                </select>
+                <select id="itemsPerPage">
+                    <option value="12">12 per page</option>
+                    <option value="24">24 per page</option>
+                    <option value="48">48 per page</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="tag-filters" id="tagFilters">
+            <!-- Tags will be dynamically populated here -->
+        </div>
+        
+        <div class="stats">
+            <h3>Library Stats</h3>
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-number" id="totalPDFs">0</div>
+                    <div class="stat-label">Total PDFs</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="totalTags">0</div>
+                    <div class="stat-label">Unique Tags</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="filteredPDFs">0</div>
+                    <div class="stat-label">Filtered Results</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="pdf-grid" id="pdfGrid">
+            <!-- PDF cards will be dynamically populated here -->
+        </div>
+        
+        <div id="noResults" class="no-results" style="display: none;">
+            <p>No PDFs match your search criteria.</p>
+        </div>
+        
+        <div class="pagination" id="pagination">
+            <!-- Pagination will be dynamically populated here -->
+        </div>
+    </div>
+    
+    <div id="pdfModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Sample data - in a real application, this would be loaded from a database or API
+        const pdfData = [
+            {
+                id: 1,
+                title: "Annual Report 2024",
+                summary: "This presentation provides a comprehensive overview of our company's financial performance, achievements, and strategic direction for the fiscal year 2024.",
+                tags: ["Finance", "Annual Report", "Corporate"],
+                date: "2024-04-15",
+                size: "3.2 MB",
+                path: "annual_report_2024.pdf"
+            },
+            {
+                id: 2,
+                title: "Marketing Strategy Q2",
+                summary: "Detailed marketing plan for Q2 including target audiences, channels, budget allocation, and expected outcomes.",
+                tags: ["Marketing", "Strategy", "Q2"],
+                date: "2024-03-28",
+                size: "2.7 MB",
+                path: "marketing_strategy_q2.pdf"
+            },
+            {
+                id: 3,
+                title: "Product Roadmap 2024-2025",
+                summary: "Future product development plans including new features, improvements, and timeline for the next 18 months.",
+                tags: ["Product", "Roadmap", "Development"],
+                date: "2024-01-10",
+                size: "5.1 MB",
+                path: "product_roadmap_2024_2025.pdf"
+            },
+            {
+                id: 4,
+                title: "HR Policies Update",
+                summary: "Updates to company HR policies including remote work guidelines, benefits changes, and career development opportunities.",
+                tags: ["HR", "Policies", "Internal"],
+                date: "2024-02-22",
+                size: "1.8 MB",
+                path: "hr_policies_update.pdf"
+            },
+            {
+                id: 5,
+                title: "Customer Satisfaction Survey Results",
+                summary: "Analysis of recent customer satisfaction survey showing key metrics, trends, and recommendations for improvement.",
+                tags: ["Customer", "Survey", "Analytics"],
+                date: "2024-04-05",
+                size: "4.3 MB",
+                path: "customer_satisfaction_survey.pdf"
+            },
+            {
+                id: 6,
+                title: "Tech Stack Modernization Plan",
+                summary: "Proposed plan for updating our technology infrastructure to improve scalability, security, and developer productivity.",
+                tags: ["Technology", "Infrastructure", "Planning"],
+                date: "2024-03-15",
+                size: "3.9 MB",
+                path: "tech_stack_modernization.pdf"
+            },
+            {
+                id: 7,
+                title: "Q1 Sales Report",
+                summary: "Detailed breakdown of Q1 sales performance by region, product line, and sales channel with comparative analysis.",
+                tags: ["Sales", "Q1", "Analytics"],
+                date: "2024-04-10",
+                size: "2.5 MB",
+                path: "q1_sales_report.pdf"
+            },
+            {
+                id: 8,
+                title: "Competitive Analysis 2024",
+                summary: "In-depth analysis of our competitive landscape including market positioning, SWOT analysis, and strategic recommendations.",
+                tags: ["Marketing", "Competitive", "Strategy"],
+                date: "2024-02-18",
+                size: "6.2 MB",
+                path: "competitive_analysis.pdf"
+            },
+            {
+                id: 9,
+                title: "New Employee Onboarding",
+                summary: "Complete onboarding process for new team members including company culture, tools, and first-month expectations.",
+                tags: ["HR", "Onboarding", "Training"],
+                date: "2024-01-25",
+                size: "2.1 MB",
+                path: "new_employee_onboarding.pdf"
+            },
+            {
+                id: 10,
+                title: "Budget Planning FY2025",
+                summary: "Financial projections and budget allocation plans for the upcoming fiscal year with department-level breakdowns.",
+                tags: ["Finance", "Budget", "Planning"],
+                date: "2024-03-30",
+                size: "4.7 MB",
+                path: "budget_planning_fy2025.pdf"
+            },
+            {
+                id: 11,
+                title: "UI/UX Design System",
+                summary: "Company-wide design system documentation including components, patterns, and implementation guidelines.",
+                tags: ["Design", "UI/UX", "Guidelines"],
+                date: "2024-02-05",
+                size: "8.3 MB",
+                path: "design_system.pdf"
+            },
+            {
+                id: 12,
+                title: "Sustainability Initiative",
+                summary: "Overview of our environmental sustainability goals, current progress, and action plans for the next 3 years.",
+                tags: ["Sustainability", "Corporate", "Planning"],
+                date: "2024-03-22",
+                size: "3.4 MB",
+                path: "sustainability_initiative.pdf"
+            },
+            {
+                id: 13,
+                title: "Customer Persona Research",
+                summary: "Detailed profiles of our target customer personas including demographics, behaviors, pain points, and buying journey.",
+                tags: ["Marketing", "Research", "Customer"],
+                date: "2024-01-18",
+                size: "5.8 MB",
+                path: "customer_persona_research.pdf"
+            },
+            {
+                id: 14,
+                title: "Data Security Protocols",
+                summary: "Comprehensive documentation of our data security practices, compliance standards, and incident response procedures.",
+                tags: ["Security", "Data", "Compliance"],
+                date: "2024-04-02",
+                size: "2.9 MB",
+                path: "data_security_protocols.pdf"
+            },
+            {
+                id: 15,
+                title: "Global Expansion Strategy",
+                summary: "Strategic plan for entering new international markets including market analysis, localization approach, and risk assessment.",
+                tags: ["Strategy", "Global", "Expansion"],
+                date: "2024-02-28",
+                size: "6.5 MB",
+                path: "global_expansion_strategy.pdf"
+            },
+            // Add more sample PDFs as needed
+        ];
+
+        // App state
+        let currentPage = 1;
+        let itemsPerPage = 12;
+        let filteredPDFs = [...pdfData];
+        let activeTags = [];
+
+        // DOM Elements
+        const pdfGrid = document.getElementById('pdfGrid');
+        const searchInput = document.getElementById('search');
+        const sortBySelect = document.getElementById('sortBy');
+        const itemsPerPageSelect = document.getElementById('itemsPerPage');
+        const tagFiltersContainer = document.getElementById('tagFilters');
+        const paginationContainer = document.getElementById('pagination');
+        const noResultsElement = document.getElementById('noResults');
+        const modal = document.getElementById('pdfModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+        const closeModal = document.querySelector('.close');
+        const totalPDFsElement = document.getElementById('totalPDFs');
+        const totalTagsElement = document.getElementById('totalTags');
+        const filteredPDFsElement = document.getElementById('filteredPDFs');
+
+        // Initialize app
+        function initApp() {
+            populateTagFilters();
+            updateStats();
+            renderPDFs();
+            
+            // Event listeners
+            searchInput.addEventListener('input', handleSearch);
+            sortBySelect.addEventListener('change', handleSort);
+            itemsPerPageSelect.addEventListener('change', handleItemsPerPageChange);
+            closeModal.addEventListener('click', () => modal.style.display = 'none');
+            window.addEventListener('click', (e) => {
+                if (e.target === modal) modal.style.display = 'none';
+            });
+        }
+
+        // Get all unique tags from the data
+        function getAllTags() {
+            const allTags = new Set();
+            pdfData.forEach(pdf => {
+                pdf.tags.forEach(tag => allTags.add(tag));
+            });
+            return Array.from(allTags).sort();
+        }
+
+        // Populate tag filters
+        function populateTagFilters() {
+            const allTags = getAllTags();
+            tagFiltersContainer.innerHTML = '';
+            
+            allTags.forEach(tag => {
+                const tagElement = document.createElement('div');
+                tagElement.className = 'tag-filter';
+                tagElement.textContent = tag;
+                tagElement.addEventListener('click', () => toggleTagFilter(tag, tagElement));
+                tagFiltersContainer.appendChild(tagElement);
+            });
+        }
+
+        // Toggle tag filter
+        function toggleTagFilter(tag, element) {
+            if (activeTags.includes(tag)) {
+                activeTags = activeTags.filter(t => t !== tag);
+                element.classList.remove('active');
+            } else {
+                activeTags.push(tag);
+                element.classList.add('active');
+            }
+            
+            filterPDFs();
+        }
+
+        // Filter PDFs based on search and tags
+        function filterPDFs() {
+            const searchTerm = searchInput.value.toLowerCase();
+            
+            filteredPDFs = pdfData.filter(pdf => {
+                const matchesSearch = pdf.title.toLowerCase().includes(searchTerm) || 
+                                    pdf.summary.toLowerCase().includes(searchTerm) ||
+                                    pdf.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+                
+                const matchesTags = activeTags.length === 0 || 
+                                    activeTags.every(tag => pdf.tags.includes(tag));
+                
+                return matchesSearch && matchesTags;
+            });
+            
+            currentPage = 1;
+            sortPDFs();
+            updateStats();
+            renderPDFs();
+        }
+
+        // Sort PDFs
+        function sortPDFs() {
+            const sortBy = sortBySelect.value;
+            
+            filteredPDFs.sort((a, b) => {
+                switch (sortBy) {
+                    case 'title':
+                        return a.title.localeCompare(b.title);
+                    case 'date':
+                        return new Date(b.date) - new Date(a.date);
+                    case 'size':
+                        return parseFloat(b.size) - parseFloat(a.size);
+                    default:
+                        return 0;
+                }
+            });
+        }
+
+        // Handle search input
+        function handleSearch() {
+            filterPDFs();
+        }
+
+        // Handle sort selection
+        function handleSort() {
+            sortPDFs();
+            renderPDFs();
+        }
+
+        // Handle items per page change
+        function handleItemsPerPageChange() {
+            itemsPerPage = parseInt(itemsPerPageSelect.value);
+            currentPage = 1;
+            renderPDFs();
+        }
+
+        // Render PDFs to the grid
+        function renderPDFs() {
+            pdfGrid.innerHTML = '';
+            
+            if (filteredPDFs.length === 0) {
+                noResultsElement.style.display = 'block';
+                paginationContainer.style.display = 'none';
+                return;
+            }
+            
+            noResultsElement.style.display = 'none';
+            paginationContainer.style.display = 'flex';
+            
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredPDFs.length);
+            
+            for (let i = startIndex; i < endIndex; i++) {
+                const pdf = filteredPDFs[i];
+                const pdfCard = createPDFCard(pdf);
+                pdfGrid.appendChild(pdfCard);
+            }
+            
+            renderPagination();
+        }
+
+        // Create a PDF card element
+        function createPDFCard(pdf) {
+            const card = document.createElement('div');
+            card.className = 'pdf-card';
+            
+            // PDF thumbnail
+            const thumbnail = document.createElement('div');
+            thumbnail.className = 'pdf-thumbnail';
+            thumbnail.innerHTML = '📄'; // Kept emoji, styling handled by CSS
+            card.appendChild(thumbnail);
+            
+            // PDF info
+            const info = document.createElement('div');
+            info.className = 'pdf-info';
+            
+            const title = document.createElement('h3');
+            title.className = 'pdf-title';
+            title.textContent = pdf.title;
+            info.appendChild(title);
+            
+            const summary = document.createElement('p');
+            summary.className = 'pdf-summary';
+            summary.textContent = pdf.summary;
+            info.appendChild(summary);
+            
+            const tags = document.createElement('div');
+            tags.className = 'pdf-tags';
+            pdf.tags.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'pdf-tag';
+                tagElement.textContent = tag;
+                tags.appendChild(tagElement);
+            });
+            info.appendChild(tags);
+            
+            card.appendChild(info);
+            
+            // Actions
+            const actions = document.createElement('div');
+            actions.className = 'actions';
+            
+            const viewBtn = document.createElement('button');
+            viewBtn.className = 'btn';
+            viewBtn.textContent = 'View Details';
+            viewBtn.addEventListener('click', () => showPDFDetails(pdf));
+            actions.appendChild(viewBtn);
+            
+            const openBtn = document.createElement('button');
+            openBtn.className = 'btn';
+            openBtn.textContent = 'Open PDF';
+            openBtn.addEventListener('click', () => openPDF(pdf));
+            actions.appendChild(openBtn);
+            
+            card.appendChild(actions);
+            
+            return card;
+        }
+
+        // Show PDF details in modal
+        function showPDFDetails(pdf) {
+            modalTitle.textContent = pdf.title;
+            
+            const content = `
+                <div style="margin: 20px 0;">
+                    <p><strong>Summary:</strong> ${pdf.summary}</p>
+                    <p><strong>Date:</strong> ${pdf.date}</p>
+                    <p><strong>Size:</strong> ${pdf.size}</p>
+                    <p><strong>File Path:</strong> ${pdf.path}</p>
+                    <div style="margin-top: 15px;">
+                        <strong>Tags:</strong>
+                        <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                            ${pdf.tags.map(tag => `<span class="pdf-tag">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn" onclick="openPDF({path: '${pdf.path}'})">Open PDF</button>
+                </div>
+            `;
+            
+            modalContent.innerHTML = content;
+            modal.style.display = 'block';
+        }
+
+        // Open a PDF (in a real app, this would open the PDF)
+        function openPDF(pdf) {
+            // Construct the path to the PDF file within your /pdfs/ folder
+            const pdfUrl = `/pdfs/${pdf.path}`;
+            // Construct the URL for the PDF.js viewer
+            // Assumes pdfjs is in a /pdfjs/ folder at the root, and viewer is in /pdfjs/web/
+            const viewerUrl = `/pdfjs/web/viewer.html?file=${encodeURIComponent(pdfUrl)}`;
+            window.open(viewerUrl, '_blank');
+        }
+
+        // Render pagination controls
+        function renderPagination() {
+            paginationContainer.innerHTML = '';
+            
+            const totalPages = Math.ceil(filteredPDFs.length / itemsPerPage);
+            
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.textContent = '← Previous';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderPDFs();
+                }
+            });
+            paginationContainer.appendChild(prevBtn);
+            
+            // Page buttons
+            const maxButtons = 5;
+            const startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            const endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.textContent = i;
+                pageBtn.className = i === currentPage ? 'active' : '';
+                pageBtn.addEventListener('click', () => {
+                    currentPage = i;
+                    renderPDFs();
+                });
+                paginationContainer.appendChild(pageBtn);
+            }
+            
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.textContent = 'Next →';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderPDFs();
+                }
+            });
+            paginationContainer.appendChild(nextBtn);
+        }
+
+        // Update statistics
+        function updateStats() {
+            totalPDFsElement.textContent = pdfData.length;
+            totalTagsElement.textContent = getAllTags().length;
+            filteredPDFsElement.textContent = filteredPDFs.length;
+        }
+
+        // Initialize the app when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
